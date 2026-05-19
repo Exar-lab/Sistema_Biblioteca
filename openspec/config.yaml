@@ -1,0 +1,67 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Python 3.13, FastAPI, Pydantic v2, Uvicorn.
+  Architecture: Minimal FastAPI entrypoint + schema package; simple teachable route/service/template direction per AGENTS.md.
+  Database target: Oracle via sync SQLAlchemy + python-oracledb thin mode.
+  Frontend target: Jinja2 templates + Bootstrap + small vanilla JS.
+  Testing: pytest is available for health/session regression checks; strict TDD remains disabled for this change.
+  Style: Keep architecture simple, model loan/stock rules first, treat Oracle SQL/triggers as first-class artifacts.
+
+strict_tdd: false
+
+testing:
+  detected_at: "2026-05-19"
+  strict_tdd: false
+  runner:
+    available: true
+    framework: pytest
+    command: python -m pytest
+  layers:
+    unit:
+      available: true
+      tool: pytest
+    integration:
+      available: false
+      tool: null
+    e2e:
+      available: false
+      tool: null
+  coverage:
+    available: false
+    command: null
+  quality:
+    linter:
+      available: false
+      command: null
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: false
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes.
+    - Keep scope aligned with 3-week delivery constraints.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 terms (MUST/SHALL/SHOULD/MAY).
+  design:
+    - Prefer simple FastAPI routes/services/templates decomposition until duplication appears.
+    - Document Oracle-specific SQL/triggers/migrations decisions explicitly.
+  tasks:
+    - Group by vertical slices (auth, catalog, loans, reports).
+    - Keep each task completable in one focused session.
+  apply:
+    - Follow existing project patterns and AGENTS.md constraints.
+    tdd: false
+    test_command: ""
+    verify_python_command: "python -m compileall app main.py"
+  verify:
+    test_command: "python -m pytest"
+    build_command: "python -m compileall app main.py"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas.
