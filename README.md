@@ -161,6 +161,54 @@ El modelo inicial contempla **8 tablas principales**. Esto cubre relaciones **1:
 
 ---
 
+## ⚙️ Setup local (FastAPI + Oracle)
+
+1. Crear y activar entorno virtual:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+> Si ya existe `venv/` en el proyecto, también podés usar `./venv/Scripts/Activate.ps1`.
+
+2. Instalar dependencias:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+3. Configurar variables de entorno:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Luego editá `.env` con tu conexión Oracle real (`DATABASE_URL`).
+
+4. Verificar sintaxis y ejecutar:
+
+```powershell
+python -m compileall app main.py
+uvicorn main:app --reload
+```
+
+5. Smoke check de salud:
+
+```powershell
+curl http://127.0.0.1:8000/health
+```
+
+Respuesta esperada con DB disponible:
+
+```json
+{"status":"ok","database":"up"}
+```
+
+Si Oracle no está disponible o las credenciales son inválidas, el endpoint responde `503`.
+
+---
+
 ## 🧭 Próximos pasos
 
 - [ ] Definir los modelos Pydantic del dominio.
