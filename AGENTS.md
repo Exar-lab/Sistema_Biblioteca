@@ -1,8 +1,13 @@
 # AGENTS.md
 
 ## Project status
-- This repository is intentionally new; no app files, manifests, CI, or test config exist yet.
-- Do not invent commands. Add setup/run/test commands here only after the corresponding executable config exists.
+- The project now has a minimal FastAPI app, Pydantic schemas, and a Python dependency manifest.
+- No CI or formal test config exists yet. Add test commands here only after the corresponding executable config exists.
+
+## Commands
+- Setup dependencies: `python -m pip install -r requirements.txt`
+- Run development server: `uvicorn main:app --reload`
+- Verify Python syntax: `python -m compileall app main.py`
 
 ## Intended stack
 - Backend: FastAPI.
