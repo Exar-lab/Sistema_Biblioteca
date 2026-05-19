@@ -1,8 +1,8 @@
 """User and authentication schemas."""
 
-from pydantic import Field
+from pydantic import ConfigDict, Field, SecretStr
 
-from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
+from app.schemas.base import BaseSchema, CredentialSchema, IdSchema, TimestampSchema
 from app.schemas.roles import RoleRead
 
 
@@ -26,11 +26,25 @@ class UserBase(BaseSchema):
 class UserCreate(UserBase):
     """Payload used to create a user."""
 
-    password: str = Field(..., min_length=8, max_length=128, description="Plain password.")
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=False,
+        validate_assignment=True,
+    )
+
+    password: SecretStr = Field(..., min_length=8, max_length=128, description="Plain password.")
 
 
 class UserUpdate(BaseSchema):
     """Payload used to update a user."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=False,
+        validate_assignment=True,
+    )
 
     username: str | None = Field(default=None, min_length=3, max_length=50)
     full_name: str | None = Field(default=None, min_length=2, max_length=120)
@@ -38,7 +52,7 @@ class UserUpdate(BaseSchema):
     phone: str | None = Field(default=None, max_length=30)
     is_active: bool | None = None
     role_id: int | None = Field(default=None, gt=0)
-    password: str | None = Field(default=None, min_length=8, max_length=128)
+    password: SecretStr | None = Field(default=None, min_length=8, max_length=128)
 
 
 class UserRead(UserBase, IdSchema, TimestampSchema):
@@ -47,18 +61,18 @@ class UserRead(UserBase, IdSchema, TimestampSchema):
     role: RoleRead | None = None
 
 
-class UserLogin(BaseSchema):
+class UserLogin(CredentialSchema):
     """Login payload."""
 
     username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=1, max_length=128)
+    password: SecretStr = Field(..., min_length=1, max_length=128)
 
 
-class UserChangePassword(BaseSchema):
+class UserChangePassword(CredentialSchema):
     """Password change payload."""
 
-    current_password: str = Field(..., min_length=1, max_length=128)
-    new_password: str = Field(..., min_length=8, max_length=128)
+    current_password: SecretStr = Field(..., min_length=1, max_length=128)
+    new_password: SecretStr = Field(..., min_length=8, max_length=128)
 
 
 __all__ = [

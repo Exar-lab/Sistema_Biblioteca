@@ -20,6 +20,17 @@ class BaseSchema(BaseModel):
     )
 
 
+class CredentialSchema(BaseModel):
+    """Base schema for payloads that contain opaque credential values."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        str_strip_whitespace=False,
+        validate_assignment=True,
+    )
+
+
 class IdSchema(BaseSchema):
     """Schema for models persisted with a numeric identifier."""
 
