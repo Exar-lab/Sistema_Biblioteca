@@ -34,7 +34,7 @@ venv\Scripts\python.exe -m pytest
 Output:
 ============================= test session starts =============================
 platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0
-rootdir: C:\Users\Exar1\Desktop\Proyecto final progra III\Sistema_Biblioteca
+rootdir: <repo-root>
 plugins: anyio-4.13.0
 collected 4 items
 
