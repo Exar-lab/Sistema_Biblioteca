@@ -4,11 +4,9 @@ import os
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import SQLAlchemyError
 
-os.environ.setdefault(
-    "DATABASE_URL",
-    "oracle+oracledb://user:pass@127.0.0.1:1/?service_name=FREEPDB1",
-)
+os.environ["DATABASE_URL"] = "oracle+oracledb://user:pass@127.0.0.1:1/?service_name=FREEPDB1"
 
 import main  # noqa: E402
 from app.core import database  # noqa: E402
@@ -26,7 +24,7 @@ def test_health_returns_503_when_db_down(monkeypatch: pytest.MonkeyPatch) -> Non
     """Health endpoint should expose the agreed DB-down contract."""
 
     def _raise_db_error(_db):
-        raise RuntimeError("db unavailable")
+        raise SQLAlchemyError("db unavailable")
 
     monkeypatch.setattr(main, "SessionLocal", lambda: _FakeContextSession())
     monkeypatch.setattr(main, "run_db_smoke_check", _raise_db_error)

@@ -11,11 +11,6 @@
 | Delivery strategy | ask-always |
 | Chain strategy | pending |
 
-Decision needed before apply: Yes
-Chained PRs recommended: No
-Chain strategy: pending
-400-line budget risk: Low
-
 ### Suggested Work Units
 
 | Unit | Goal | Likely PR | Notes |

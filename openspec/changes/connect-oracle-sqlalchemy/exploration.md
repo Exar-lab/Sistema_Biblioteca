@@ -1,7 +1,7 @@
 ## Exploration: Connect FastAPI app to Oracle using SQLAlchemy
 
 ### Current State
-The project currently exposes a minimal FastAPI app in `main.py` with no database integration, no settings module, and no SQLAlchemy usage. `requirements.txt` contains only `fastapi`, `pydantic`, and `uvicorn[standard]`. The OpenSpec init context (`openspec/config.yaml`) already defines Oracle as the target database and emphasizes simple, teachable architecture.
+At the start of this change, the project exposed a minimal FastAPI app in `main.py` with no database integration, no settings module, and no SQLAlchemy usage. `requirements.txt` contained only `fastapi`, `pydantic`, and `uvicorn[standard]`. The OpenSpec init context (`openspec/config.yaml`) already defined Oracle as the target database and emphasized simple, teachable architecture.
 
 ### Affected Areas
 - `requirements.txt` — must include SQLAlchemy and Oracle driver dependencies for reproducible installs.

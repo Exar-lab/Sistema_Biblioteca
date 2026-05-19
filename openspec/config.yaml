@@ -3,9 +3,9 @@ schema: spec-driven
 context: |
   Tech stack: Python 3.13, FastAPI, Pydantic v2, Uvicorn.
   Architecture: Minimal FastAPI entrypoint + schema package; simple teachable route/service/template direction per AGENTS.md.
-  Database target: Oracle (planned, not implemented in init).
+  Database target: Oracle via sync SQLAlchemy + python-oracledb thin mode.
   Frontend target: Jinja2 templates + Bootstrap + small vanilla JS.
-  Testing: No test runner/config detected yet.
+  Testing: pytest is available for health/session regression checks; strict TDD remains disabled for this change.
   Style: Keep architecture simple, model loan/stock rules first, treat Oracle SQL/triggers as first-class artifacts.
 
 strict_tdd: false

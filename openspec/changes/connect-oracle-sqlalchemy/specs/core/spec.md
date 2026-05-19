@@ -17,17 +17,22 @@ The system MUST load database connection settings securely from environment vari
 
 ### Requirement: Session Management
 
-The system MUST manage database connections securely using a request-scoped lifecycle.
+The system MUST manage database connections securely using a request-scoped lifecycle for route dependencies, while one-off smoke checks MUST close their session after use.
 
-#### Scenario: Request completes successfully
-- GIVEN an active API request requiring a database session
+#### Scenario: Request dependency completes successfully
+- GIVEN an active API request using the `get_db` dependency
 - WHEN the request completes successfully
 - THEN the session is committed and closed securely
 
-#### Scenario: Request fails
-- GIVEN an active API request
+#### Scenario: Request dependency fails
+- GIVEN an active API request using the `get_db` dependency
 - WHEN an unhandled exception occurs
 - THEN the database session is rolled back and closed
+
+#### Scenario: Health smoke check completes
+- GIVEN the `/health` endpoint opens a short-lived database session
+- WHEN the smoke query completes or fails
+- THEN the session is closed without requiring the request dependency commit path
 
 ### Requirement: Health Monitoring
 
