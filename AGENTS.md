@@ -6,8 +6,10 @@
 
 ## Commands
 - Setup dependencies: `python -m pip install -r requirements.txt`
+- Run formal tests: `python -m pytest`
 - Run development server: `uvicorn main:app --reload`
 - Verify Python syntax: `python -m compileall app main.py`
+- Smoke-check DB connectivity (running app required): `curl http://127.0.0.1:8000/health`
 
 ## Intended stack
 - Backend: FastAPI.
