@@ -13,7 +13,6 @@ settings = get_settings()
 engine = create_engine(
     settings.DATABASE_URL,
     echo=settings.SQLALCHEMY_ECHO,
-    future=True,
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
