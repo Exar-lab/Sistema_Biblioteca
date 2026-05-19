@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.database import SessionLocal, run_db_smoke_check
 
@@ -20,15 +21,15 @@ def read_root() -> dict[str, str]:
     return {"message": "Sistema de Control de Biblioteca API"}
 
 
-@app.get("/health", tags=["Health"])
-def read_health() -> dict[str, str]:
+@app.get("/health", tags=["Health"], response_model=None)
+def read_health() -> dict[str, str] | JSONResponse:
     """Verify app and Oracle DB connectivity."""
 
     try:
         with SessionLocal() as db:
             run_db_smoke_check(db)
         return {"status": "ok", "database": "up"}
-    except Exception as exc:
+    except SQLAlchemyError:
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "error", "database": "down"},
