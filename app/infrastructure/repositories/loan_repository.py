@@ -66,8 +66,21 @@ class LoanRepositorySql(SqlRepositoryBase[Loan]):
             raise
 
     # ------------------------------------------------------------------
-    # Override delete — flush needs care; keep it consistent with base
+    # Additional query methods
     # ------------------------------------------------------------------
+
+    def has_overdue_loans(self, session: Session, user_id: int) -> bool:
+        """Return True if the user has any ACTIVE loans past their due date."""
+        from datetime import date
+        return (
+            session.query(self.model)
+            .filter(
+                self.model.user_id == user_id,
+                self.model.status == "ACTIVE",
+                self.model.due_date < date.today(),
+            )
+            .first()
+        ) is not None
 
 
 def _is_out_of_stock_error(exc: DBAPIError) -> bool:

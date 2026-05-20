@@ -44,9 +44,9 @@ class BookRepositorySql(SqlRepositoryBase[Book]):
     ) -> None:
         """Replace all author associations for *book_id* with *author_ids*.
 
-        Executes a DELETE + bulk INSERT inside the current session transaction.
-        The caller is responsible for flushing / committing.
+        Executes DELETE + bulk INSERT then flushes within the current session.
         """
+        author_ids = list(dict.fromkeys(author_ids))  # deduplicate preserving order
         # Delete existing associations
         session.execute(
             delete(book_authors).where(book_authors.c.book_id == book_id)

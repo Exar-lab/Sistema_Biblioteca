@@ -5,7 +5,6 @@ loan, then delegates to the LoanRepository port.
 No SQLAlchemy or infrastructure imports.
 """
 
-from datetime import date
 from typing import Any
 
 from app.application.errors import ConflictError, NotFoundError
@@ -78,18 +77,10 @@ class LoanService:
         if book_id is not None and self._book_repo.get_by_id(session, book_id) is None:
             raise NotFoundError(f"Book {book_id} not found.")
 
-        if user_id is not None:
-            today = date.today()
-            overdue = [
-                loan for loan in self._repo.get_by_user(session, user_id)
-                if getattr(loan, "status", None) == "ACTIVE"
-                and getattr(loan, "due_date", None) is not None
-                and loan.due_date < today
-            ]
-            if overdue:
-                raise ConflictError(
-                    f"User {user_id} has {len(overdue)} overdue loan(s) and cannot borrow."
-                )
+        if user_id is not None and self._repo.has_overdue_loans(session, user_id):
+            raise ConflictError(
+                f"User {user_id} has overdue loans and cannot borrow."
+            )
 
         return self._repo.create(session, data)
 
