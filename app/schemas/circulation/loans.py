@@ -1,6 +1,6 @@
 """Loan schemas."""
 
-from datetime import date, datetime
+from datetime import date
 
 from pydantic import Field
 
@@ -16,7 +16,7 @@ class LoanBase(BaseSchema):
     book_id: int = Field(..., gt=0, description="Borrowed book identifier.")
     loan_date: date = Field(default_factory=date.today, description="Loan start date.")
     due_date: date = Field(..., description="Date when the book must be returned.")
-    is_active: bool = Field(default=True, description="Whether the loan is open.")
+    status: str = Field(default="ACTIVE", description="Loan status: ACTIVE or RETURNED.")
 
 
 class LoanCreate(LoanBase):
@@ -27,14 +27,13 @@ class LoanUpdate(BaseSchema):
     """Payload used to update a loan."""
 
     due_date: date | None = None
-    is_active: bool | None = None
+    status: str | None = Field(default=None, description="Updated loan status.")
 
 
 class LoanRead(LoanBase, IdSchema, TimestampSchema):
     """Loan data returned by the API."""
 
-    returned_at: datetime | None = Field(default=None, description="Return timestamp when the book was returned.")
-    is_overdue: bool = Field(default=False, description="Whether the loan is overdue.")
+    return_date: date | None = Field(default=None, description="Date when the book was returned.")
     user: UserRead | None = None
     book: BookRead | None = None
 

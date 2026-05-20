@@ -7,6 +7,8 @@ Run with:
     python -m pytest tests/integration/test_return_repository.py -m integration -v
 """
 
+import os
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -33,17 +35,27 @@ class TestReturnRepositoryCreate:
         3. Access loan.status — SQLAlchemy must re-fetch from Oracle, picking
            up the server-side trigger update.
 
-        Prerequisite: book_id=1 and user_id=1 must exist with available stock.
+        Prerequisite: TEST_RETURN_USER_ID and TEST_RETURN_BOOK_ID must point to
+        existing rows, and the book must have available stock.
         """
         import datetime
+
+        user_id_env = os.getenv("TEST_RETURN_USER_ID")
+        book_id_env = os.getenv("TEST_RETURN_BOOK_ID")
+        if not user_id_env or not book_id_env:
+            pytest.skip(
+                "TEST_RETURN_USER_ID and TEST_RETURN_BOOK_ID must be set for return integration tests"
+            )
+        user_id = int(user_id_env)
+        book_id = int(book_id_env)
 
         loan_repo = LoanRepositorySql()
         return_repo = ReturnRepositorySql()
 
         # Step 1: create a fresh loan
         loan_data = {
-            "user_id": 1,
-            "book_id": 1,
+            "user_id": user_id,
+            "book_id": book_id,
             "due_date": datetime.date.today() + datetime.timedelta(days=14),
         }
         loan: Loan = loan_repo.create(db_session, loan_data)

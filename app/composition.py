@@ -62,7 +62,7 @@ def get_author_service() -> AuthorService:
 
 def get_book_service() -> BookService:
     """Return a BookService wired to the current request session."""
-    return BookService(repo=_book_repo)
+    return BookService(repo=_book_repo, author_repo=_author_repo)
 
 
 def get_loan_service() -> LoanService:

@@ -5,17 +5,21 @@ Delegates author-relationship operations to the BookRepository port's
 extended contract (get_with_authors, set_authors).
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from app.application.errors import NotFoundError
+from app.application.ports.author_repository import AuthorRepository
 from app.application.ports.book_repository import BookRepository
 
 
 class BookService:
     """Orchestrates book operations through the BookRepository port."""
 
-    def __init__(self, repo: BookRepository) -> None:
+    def __init__(self, repo: BookRepository, author_repo: AuthorRepository) -> None:
         self._repo = repo
+        self._author_repo = author_repo
 
     # ------------------------------------------------------------------
     # Read
@@ -85,4 +89,14 @@ class BookService:
         book = self._repo.get_by_id(session, book_id)
         if book is None:
             raise NotFoundError(f"Book {book_id} not found.")
+
+        missing_author_ids = [
+            author_id
+            for author_id in author_ids
+            if self._author_repo.get_by_id(session, author_id) is None
+        ]
+        if missing_author_ids:
+            missing = ", ".join(str(author_id) for author_id in missing_author_ids)
+            raise NotFoundError(f"Author(s) not found: {missing}.")
+
         self._repo.set_authors(session, book_id, author_ids)

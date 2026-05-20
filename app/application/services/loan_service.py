@@ -5,6 +5,8 @@ loan, then delegates to the LoanRepository port.
 No SQLAlchemy or infrastructure imports.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from app.application.errors import ConflictError, NotFoundError

@@ -1,15 +1,11 @@
 """Return schemas."""
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from pydantic import Field
 
 from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
-from app.schemas.catalog.books import BookRead
-from app.schemas.users import UserRead
-
-
 class ReturnBase(BaseSchema):
     """Shared return fields."""
 
@@ -39,10 +35,6 @@ class ReturnUpdate(BaseSchema):
 
 class ReturnRead(ReturnBase, IdSchema, TimestampSchema):
     """Return data returned by the API."""
-
-    processed_at: datetime | None = Field(default=None, description="Timestamp when the return was registered.")
-    user: UserRead | None = None
-    book: BookRead | None = None
 
 
 __all__ = ["ReturnBase", "ReturnCreate", "ReturnUpdate", "ReturnRead"]

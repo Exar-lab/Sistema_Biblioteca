@@ -9,6 +9,7 @@ Run with:
 """
 
 import datetime
+import os
 
 import pytest
 from sqlalchemy.orm import Session
@@ -57,8 +58,10 @@ class TestLoanRepositoryCreate:
         """
         repo = LoanRepositorySql()
 
-        # Set this to a book_id whose available_stock is 0 in the test DB.
-        zero_stock_book_id = 999  # adjust to match test-DB seed data
+        zero_stock_book_id_env = os.getenv("TEST_ZERO_STOCK_BOOK_ID")
+        if not zero_stock_book_id_env:
+            pytest.skip("TEST_ZERO_STOCK_BOOK_ID not set — skipping zero-stock test")
+        zero_stock_book_id = int(zero_stock_book_id_env)
 
         data = {
             "user_id": 1,

@@ -40,7 +40,7 @@ class TestProcessResultValue:
     def test_none_is_none_safe(self, boolchar: BoolChar) -> None:
         # None from DB must not raise; implementation returns None
         result = boolchar.process_result_value(None, None)
-        assert result is None or result is False  # both are acceptable falsy outcomes
+        assert result is None
 
     def test_unexpected_value_maps_to_false(self, boolchar: BoolChar) -> None:
         """Any value that is not 'Y' evaluates to False."""

@@ -1,7 +1,9 @@
 """Books router — CRUD endpoints including author association."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
@@ -11,7 +13,20 @@ from app.schemas.catalog.books import BookCreate, BookRead, BookUpdate
 
 
 class AuthorIdsPayload(BaseModel):
-    author_ids: list[int]
+    """Payload for replacing a book's author associations."""
+
+    author_ids: list[Annotated[int, Field(gt=0)]] = Field(
+        ...,
+        description="Positive, unique author identifiers.",
+    )
+
+    @field_validator("author_ids")
+    @classmethod
+    def author_ids_must_be_unique(cls, value: list[int]) -> list[int]:
+        """Reject duplicate author IDs before hitting the association table PK."""
+        if len(value) != len(set(value)):
+            raise ValueError("author_ids must be unique")
+        return value
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
