@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String, TIMESTAMP, text
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
+from app.core.base import Base
 
 
 class Return_(Base):

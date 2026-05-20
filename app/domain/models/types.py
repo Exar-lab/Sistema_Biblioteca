@@ -20,6 +20,8 @@ class BoolChar(TypeDecorator):
         """Convert Python bool to CHAR(1) before writing to the DB."""
         if value is None:
             return None
+        if not isinstance(value, bool):
+            raise TypeError(f"BoolChar expected bool, got {type(value).__name__!r}")
         return "Y" if value else "N"
 
     def process_result_value(self, value, dialect):
