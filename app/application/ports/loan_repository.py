@@ -41,3 +41,7 @@ class LoanRepository(Protocol):
     def get_by_book(self, session: Any, book_id: int) -> list[Any]:
         """Return all loans for the given *book_id*."""
         ...
+
+    def has_overdue_loans(self, session: Any, user_id: int) -> bool:
+        """Return True if the user has any ACTIVE loans with due_date before today."""
+        ...

@@ -7,10 +7,6 @@ Routers import these factories and declare them via ``Depends``; they never
 instantiate repos or services directly.
 """
 
-from fastapi import Depends
-from sqlalchemy.orm import Session
-
-from app.api.dependencies import get_db
 from app.application.services.author_service import AuthorService
 from app.application.services.book_service import BookService
 from app.application.services.category_service import CategoryService
@@ -44,32 +40,32 @@ _return_repo = ReturnRepositorySql()
 # ---------------------------------------------------------------------------
 
 
-def get_role_service(db: Session = Depends(get_db)) -> RoleService:
+def get_role_service() -> RoleService:
     """Return a RoleService wired to the current request session."""
     return RoleService(repo=_role_repo)
 
 
-def get_user_service(db: Session = Depends(get_db)) -> UserService:
+def get_user_service() -> UserService:
     """Return a UserService wired to the current request session."""
     return UserService(repo=_user_repo)
 
 
-def get_category_service(db: Session = Depends(get_db)) -> CategoryService:
+def get_category_service() -> CategoryService:
     """Return a CategoryService wired to the current request session."""
     return CategoryService(repo=_category_repo)
 
 
-def get_author_service(db: Session = Depends(get_db)) -> AuthorService:
+def get_author_service() -> AuthorService:
     """Return an AuthorService wired to the current request session."""
     return AuthorService(repo=_author_repo)
 
 
-def get_book_service(db: Session = Depends(get_db)) -> BookService:
+def get_book_service() -> BookService:
     """Return a BookService wired to the current request session."""
     return BookService(repo=_book_repo)
 
 
-def get_loan_service(db: Session = Depends(get_db)) -> LoanService:
+def get_loan_service() -> LoanService:
     """Return a LoanService wired to the current request session."""
     return LoanService(
         repo=_loan_repo,
@@ -78,7 +74,7 @@ def get_loan_service(db: Session = Depends(get_db)) -> LoanService:
     )
 
 
-def get_return_service(db: Session = Depends(get_db)) -> ReturnService:
+def get_return_service() -> ReturnService:
     """Return a ReturnService wired to the current request session."""
     return ReturnService(
         repo=_return_repo,
