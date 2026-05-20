@@ -16,7 +16,6 @@ class LoanBase(BaseSchema):
     book_id: int = Field(..., gt=0, description="Borrowed book identifier.")
     loan_date: date = Field(default_factory=date.today, description="Loan start date.")
     due_date: date = Field(..., description="Date when the book must be returned.")
-    notes: str | None = Field(default=None, max_length=500, description="Optional loan notes.")
     is_active: bool = Field(default=True, description="Whether the loan is open.")
 
 
@@ -28,7 +27,6 @@ class LoanUpdate(BaseSchema):
     """Payload used to update a loan."""
 
     due_date: date | None = None
-    notes: str | None = Field(default=None, max_length=500)
     is_active: bool | None = None
 
 

@@ -10,7 +10,6 @@ class RoleBase(BaseSchema):
 
     name: str = Field(..., min_length=2, max_length=50, description="Role name.")
     description: str | None = Field(default=None, max_length=255, description="Role description.")
-    is_active: bool = Field(default=True, description="Whether the role is active.")
 
 
 class RoleCreate(RoleBase):
@@ -22,7 +21,6 @@ class RoleUpdate(BaseSchema):
 
     name: str | None = Field(default=None, min_length=2, max_length=50)
     description: str | None = Field(default=None, max_length=255)
-    is_active: bool | None = None
 
 
 class RoleRead(RoleBase, IdSchema, TimestampSchema):

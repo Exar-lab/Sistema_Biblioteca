@@ -11,7 +11,6 @@ class AuthorBase(BaseSchema):
     first_name: str = Field(..., min_length=2, max_length=80, description="Author first name.")
     last_name: str = Field(..., min_length=2, max_length=80, description="Author last name.")
     biography: str | None = Field(default=None, max_length=2000, description="Short author biography.")
-    nationality: str | None = Field(default=None, max_length=80, description="Author nationality.")
     is_active: bool = Field(default=True, description="Whether the author is active.")
 
 
@@ -25,7 +24,6 @@ class AuthorUpdate(BaseSchema):
     first_name: str | None = Field(default=None, min_length=2, max_length=80)
     last_name: str | None = Field(default=None, min_length=2, max_length=80)
     biography: str | None = Field(default=None, max_length=2000)
-    nationality: str | None = Field(default=None, max_length=80)
     is_active: bool | None = None
 
 
