@@ -4,8 +4,9 @@ from collections.abc import Generator
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
+from app.core.base import Base
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -16,7 +17,6 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-Base = declarative_base()
 
 
 def get_db() -> Generator[Session, None, None]:

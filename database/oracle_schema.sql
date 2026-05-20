@@ -1,4 +1,14 @@
-SET DEFINE OFF
+-- =============================================================================
+-- Oracle Library Schema — Execution Context
+-- =============================================================================
+-- Prerequisites:
+--   * Must be run as SYS (or a user with DBA privileges).
+--   * Must be executed inside a CDB, targeting the XEPDB1 PDB.
+--   * Recommended invocation (from host shell):
+--       sqlplus / as sysdba @database/oracle_schema.sql
+-- =============================================================================
+
+SET DEFINE ON
 SET SERVEROUTPUT ON
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 
@@ -12,11 +22,12 @@ BEGIN
     FROM dba_users
     WHERE username = 'BIBLIOTECA';
 
+    -- Replace &biblioteca_password with your chosen password before executing.
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE USER BIBLIOTECA IDENTIFIED BY "Biblioteca123" DEFAULT TABLESPACE USERS TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON USERS';
+        EXECUTE IMMEDIATE 'CREATE USER BIBLIOTECA IDENTIFIED BY "&biblioteca_password" DEFAULT TABLESPACE USERS TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON USERS';
         DBMS_OUTPUT.PUT_LINE('Created user BIBLIOTECA.');
     ELSE
-        EXECUTE IMMEDIATE 'ALTER USER BIBLIOTECA IDENTIFIED BY "Biblioteca123" ACCOUNT UNLOCK';
+        EXECUTE IMMEDIATE 'ALTER USER BIBLIOTECA IDENTIFIED BY "&biblioteca_password" ACCOUNT UNLOCK';
         EXECUTE IMMEDIATE 'ALTER USER BIBLIOTECA QUOTA UNLIMITED ON USERS';
         DBMS_OUTPUT.PUT_LINE('Updated existing user BIBLIOTECA.');
     END IF;
