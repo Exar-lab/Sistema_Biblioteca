@@ -12,11 +12,7 @@
 | Delivery strategy | auto-chain |
 | Chain strategy | stacked-to-main |
 
-Decision needed before apply: No
-Chained PRs recommended: Yes
-Chain strategy: stacked-to-main
-400-line budget risk: High
-300-line budget risk: High
+Decision needed before apply: No — the delivery strategy and budget risks are captured in the forecast table above.
 
 ## Verification Commands
 

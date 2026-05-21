@@ -331,8 +331,8 @@ status: completed
 phase: design
 skill_resolution: paths-injected
 artifacts:
-  - C:\Users\Exar1\AppData\Local\Temp\pi-subagents-user-Exar1\chain-runs\10fef671\design.md
-  - C:\Users\Exar1\AppData\Local\Temp\pi-subagents-user-Exar1\chain-runs\10fef671\spec.md
+  - openspec/changes/adopt-sqlalchemy-persistence/design.md
+  - openspec/changes/adopt-sqlalchemy-persistence/specs/core/spec.md
 summary:
   - Designed a synchronous SQLAlchemy adoption approach for the FastAPI + Oracle app.
   - Covered module layout, DI/session lifecycle, ORM/Pydantic boundaries, repository/service usage, Oracle `.sql` coexistence, rule ownership, tests, and rollout.
