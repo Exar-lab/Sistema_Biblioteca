@@ -1,6 +1,6 @@
 """Role schemas."""
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
 
@@ -8,9 +8,10 @@ from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
 class RoleBase(BaseSchema):
     """Shared role fields."""
 
-    name: str = Field(..., min_length=2, max_length=50, description="Role name.")
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
+
+    name: str = Field(..., min_length=2, max_length=30, description="Role name.")
     description: str | None = Field(default=None, max_length=255, description="Role description.")
-    is_active: bool = Field(default=True, description="Whether the role is active.")
 
 
 class RoleCreate(RoleBase):
@@ -20,9 +21,10 @@ class RoleCreate(RoleBase):
 class RoleUpdate(BaseSchema):
     """Payload used to update a role."""
 
-    name: str | None = Field(default=None, min_length=2, max_length=50)
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
+
+    name: str | None = Field(default=None, min_length=2, max_length=30)
     description: str | None = Field(default=None, max_length=255)
-    is_active: bool | None = None
 
 
 class RoleRead(RoleBase, IdSchema, TimestampSchema):
