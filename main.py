@@ -4,6 +4,7 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.api.v1.routers.categories import router as categories_router
 from app.core.database import SessionLocal, run_db_smoke_check
 
 
@@ -12,6 +13,8 @@ app = FastAPI(
     description="API for managing library users, catalog, loans, returns, and reports.",
     version="0.1.0",
 )
+
+app.include_router(categories_router, prefix="/api/v1")
 
 
 @app.get("/", tags=["Health"])

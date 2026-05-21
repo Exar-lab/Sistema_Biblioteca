@@ -43,6 +43,17 @@ curl http://127.0.0.1:8000/health
 
 ## PR 2 — Catalog and low-risk CRUD repository path
 
+### PR 2A — Category vertical slice
+
+- [x] Align category schema description length with Oracle `VARCHAR2(500)`.
+- [x] Add SQLAlchemy category repository adapter.
+- [x] Add category application service without FastAPI or SQLAlchemy imports.
+- [x] Add `/api/v1/categories` router and mount it in `main.py`.
+- [x] Add schema, service, and router tests using fakes/no Oracle dependency.
+- [x] Verification: `python -m compileall app main.py` and targeted pytest passed.
+
+### Remaining PR 2 scope
+
 - [ ] Audit ORM mappings against `database/oracle_schema.sql` for `app/domain/models/role.py`, `category.py`, `author.py`, `book.py`, and the `book_authors` association table.
 - [ ] Align Pydantic contracts in `app/schemas/role.py`, `category.py`, `author.py`, and `book.py` so read schemas use `from_attributes=True` and do not expose persistence-only internals.
 - [ ] Confirm or complete repository ports in `app/application/ports/{role,category,author,book}_repository.py` for required CRUD and book-author relationship methods.

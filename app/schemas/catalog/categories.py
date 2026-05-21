@@ -9,7 +9,7 @@ class CategoryBase(BaseSchema):
     """Shared category fields."""
 
     name: str = Field(..., min_length=2, max_length=80, description="Category name.")
-    description: str | None = Field(default=None, max_length=255, description="Category description.")
+    description: str | None = Field(default=None, max_length=500, description="Category description.")
     is_active: bool = Field(default=True, description="Whether the category is active.")
 
 
@@ -21,7 +21,7 @@ class CategoryUpdate(BaseSchema):
     """Payload used to update a category."""
 
     name: str | None = Field(default=None, min_length=2, max_length=80)
-    description: str | None = Field(default=None, max_length=255)
+    description: str | None = Field(default=None, max_length=500)
     is_active: bool | None = None
 
 
