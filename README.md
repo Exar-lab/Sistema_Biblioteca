@@ -209,6 +209,31 @@ Si Oracle no está disponible o las credenciales son inválidas, el endpoint res
 
 ---
 
+## 🗄️ Persistencia: SQLAlchemy + Oracle SQL
+
+El backend usa **SQLAlchemy como capa principal de persistencia en tiempo de ejecución**. Las rutas de FastAPI deben delegar en servicios/repositorios y no ejecutar SQL crudo para flujos normales de la aplicación.
+
+Los archivos `.sql` de `database/` siguen siendo artefactos de primer nivel para Oracle:
+
+- creación/bootstrap del esquema;
+- constraints, índices, secuencias o identities;
+- triggers, por ejemplo reglas de stock y devolución;
+- datos iniciales o de referencia;
+- scripts manuales de diagnóstico o mantenimiento.
+
+Regla de ownership:
+
+| Responsabilidad | Dueño |
+| --- | --- |
+| CRUD y consultas de la app | SQLAlchemy en repositorios/servicios |
+| Ciclo de sesión por request | `app.core.database.get_db` |
+| Reglas de workflow, como bloqueo por mora | Servicios de aplicación |
+| Invariantes propias de Oracle, como triggers/constraints | Scripts `.sql` en `database/` |
+
+No borres un `.sql` solo porque exista un modelo ORM. Si se elimina o reemplaza un artefacto Oracle, el cambio debe explicar cuál es el reemplazo y por qué.
+
+---
+
 ## 🧭 Próximos pasos
 
 - [ ] Definir los modelos Pydantic del dominio.
