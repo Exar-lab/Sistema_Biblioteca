@@ -1,7 +1,5 @@
 """SQLAlchemy adapter for category persistence."""
 
-from typing import Any
-
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
