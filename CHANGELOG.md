@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.3.0...sistema-biblioteca-v0.4.0) (2026-05-21)
+
+
+### Features
+
+* **domain:** add ORM models, Protocol ports, BoolChar, and domain errors ([3119342](https://github.com/Exar-lab/Sistema_Biblioteca/commit/3119342dfb6ff619c623826ca4897e3c2952c186)), closes [#10](https://github.com/Exar-lab/Sistema_Biblioteca/issues/10)
+* **domain:** domain foundation — ORM models, Protocol ports, BoolChar, domain errors ([3de135e](https://github.com/Exar-lab/Sistema_Biblioteca/commit/3de135ed05ea5ed73cfb6d3f0945f932d24ad620))
+
+
+### Bug Fixes
+
+* **domain:** decouple ORM Base from engine init and harden BoolChar bind ([7361170](https://github.com/Exar-lab/Sistema_Biblioteca/commit/73611707e289052ed20100cda1e16a76c1b33a3b))
+
 ## [0.3.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.2.0...sistema-biblioteca-v0.3.0) (2026-05-19)
 
 
