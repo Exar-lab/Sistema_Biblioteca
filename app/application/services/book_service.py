@@ -84,7 +84,7 @@ class BookService:
         """Replace the book's author associations.
 
         Raises:
-            NotFoundError: if no book with *book_id* exists.
+            NotFoundError: if no book with *book_id* exists or any author is missing.
         """
         book = self._repo.get_by_id(session, book_id)
         if book is None:
