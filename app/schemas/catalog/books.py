@@ -1,16 +1,21 @@
 """Book schemas."""
 
 from datetime import date
+from typing import Annotated
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
 from app.schemas.catalog.authors import AuthorRead
 from app.schemas.catalog.categories import CategoryRead
 
+PositiveId = Annotated[int, Field(gt=0)]
+
 
 class BookBase(BaseSchema):
     """Shared book fields."""
+
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
 
     title: str = Field(..., min_length=2, max_length=200, description="Book title.")
     isbn: str | None = Field(default=None, max_length=20, description="ISBN code.")
@@ -27,11 +32,15 @@ class BookBase(BaseSchema):
 class BookCreate(BookBase):
     """Payload used to create a book."""
 
-    author_ids: list[int] = Field(default_factory=list, description="Author identifiers for the many-to-many relation.")
+    author_ids: list[PositiveId] = Field(
+        default_factory=list, description="Author identifiers for the many-to-many relation."
+    )
 
 
 class BookUpdate(BaseSchema):
     """Payload used to update a book."""
+
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
 
     title: str | None = Field(default=None, min_length=2, max_length=200)
     isbn: str | None = Field(default=None, max_length=20)
@@ -43,7 +52,7 @@ class BookUpdate(BaseSchema):
     stock_total: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
     category_id: int | None = Field(default=None, gt=0)
-    author_ids: list[int] | None = None
+    author_ids: list[PositiveId] | None = None
 
 
 class BookRead(BookBase, IdSchema, TimestampSchema):
