@@ -6,7 +6,7 @@ from app.application.errors import ConflictError, NotFoundError
 from app.application.ports.book_repository import BookRepository
 from app.application.ports.loan_repository import LoanRepository
 from app.application.ports.user_repository import UserRepository
-from app.schemas.circulation.loans import LoanCreate
+from app.schemas.circulation.loans import LoanCreate, LoanUpdate
 
 
 class LoanService:
@@ -35,6 +35,21 @@ class LoanService:
 
         self._ensure_user_exists(session, user_id)
         return self._loan_repository.get_by_user(session, user_id)
+
+    def update_loan(self, session: Any, loan_id: int, data: LoanUpdate) -> Any:
+        """Update a loan or raise when it does not exist."""
+
+        loan = self._loan_repository.update(session, loan_id, data)
+        if loan is None:
+            raise NotFoundError("Loan not found.")
+        return loan
+
+    def delete_loan(self, session: Any, loan_id: int) -> None:
+        """Delete a loan or raise when it does not exist."""
+
+        deleted = self._loan_repository.delete(session, loan_id)
+        if not deleted:
+            raise NotFoundError("Loan not found.")
 
     def create_loan(self, session: Any, data: LoanCreate) -> Any:
         """Create a loan after application-owned workflow checks."""

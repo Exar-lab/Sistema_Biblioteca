@@ -17,7 +17,7 @@ from app.application.errors import ConflictError, NotFoundError, OutOfStockError
 from app.application.services.loan_service import LoanService  # noqa: E402
 from app.core.database import get_db  # noqa: E402
 from app.infrastructure.repositories.loan_repository import SqlAlchemyLoanRepository  # noqa: E402
-from app.schemas.circulation.loans import LoanCreate  # noqa: E402
+from app.schemas.circulation.loans import LoanCreate, LoanUpdate  # noqa: E402
 
 
 @dataclass
@@ -135,6 +135,20 @@ class FakeLoanRepository:
 
     def get_by_book(self, _session: Any, book_id: int) -> list[LoanStub]:
         return [loan for loan in self.items.values() if loan.book_id == book_id]
+
+    def update(self, _session: Any, id: int, data: LoanUpdate) -> LoanStub | None:
+        loan = self.items.get(id)
+        if loan is None:
+            return None
+        for f, v in data.model_dump(exclude_unset=True).items():
+            setattr(loan, f, v)
+        return loan
+
+    def delete(self, _session: Any, id: int) -> bool:
+        if id not in self.items:
+            return False
+        del self.items[id]
+        return True
 
     def has_overdue_loans(self, _session: Any, user_id: int) -> bool:
         return self.overdue and user_id == 1
@@ -323,3 +337,63 @@ def test_loans_router_maps_overdue_and_out_of_stock_to_409(service: LoanService,
 
     assert response.status_code == 409
     assert response.json() == {"detail": expected_detail}
+
+
+def test_loans_router_updates_due_date() -> None:
+    service = build_service()
+    new_due = date.today() + timedelta(days=21)
+
+    main.app.dependency_overrides[get_loan_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        response = TestClient(main.app).patch(
+            "/api/v1/loans/1",
+            json={"due_date": str(new_due)},
+        )
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["due_date"] == str(new_due)
+
+
+def test_loans_router_maps_update_of_missing_loan_to_404() -> None:
+    service = build_service()
+
+    main.app.dependency_overrides[get_loan_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        response = TestClient(main.app).patch(
+            "/api/v1/loans/999",
+            json={"due_date": str(date.today() + timedelta(days=7))},
+        )
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+
+
+def test_loans_router_deletes_loan() -> None:
+    service = build_service()
+
+    main.app.dependency_overrides[get_loan_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        response = TestClient(main.app).delete("/api/v1/loans/1")
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 204
+
+
+def test_loans_router_maps_delete_of_missing_loan_to_404() -> None:
+    service = build_service()
+
+    main.app.dependency_overrides[get_loan_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        response = TestClient(main.app).delete("/api/v1/loans/999")
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 404

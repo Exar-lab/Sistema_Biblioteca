@@ -73,12 +73,23 @@ class SqlAlchemyLoanRepository:
         return session.scalar(statement) is not None
 
     def _with_relationships(self) -> Any:
-        """Build the default query shape for API serialization."""
+        """Build the default query shape for API serialization.
 
-        return select(Loan).options(selectinload(Loan.user), selectinload(Loan.book))
+        Eager-loads two levels so that serializing LoanRead.user.role and
+        LoanRead.book.category/authors does not trigger per-row SELECT queries.
+        """
+
+        from app.domain.models.book import Book
+        from app.domain.models.user import LibraryUser
+
+        return select(Loan).options(
+            selectinload(Loan.user).selectinload(LibraryUser.role),
+            selectinload(Loan.book).selectinload(Book.category),
+            selectinload(Loan.book).selectinload(Book.authors),
+        )
 
     def _flush_refresh_and_load(self, session: Session, loan: Loan) -> Loan:
-        """Flush changes, translate Oracle trigger failures, and reload relationships."""
+        """Flush changes, translate known constraint failures, and reload relationships."""
 
         try:
             session.flush()
@@ -86,7 +97,9 @@ class SqlAlchemyLoanRepository:
         except DBAPIError as exc:
             if self._is_out_of_stock_error(exc):
                 raise OutOfStockError("Book has no available stock for loan.") from exc
-            raise ConflictError("Loan violates database constraints.") from exc
+            if isinstance(exc, IntegrityError):
+                raise ConflictError("Loan violates database constraints.") from exc
+            raise
         return self.get_by_id(session, loan.id) or loan
 
     def _is_out_of_stock_error(self, exc: DBAPIError) -> bool:
