@@ -1,1 +1,33 @@
-{}
+{
+	"subagents": {
+		"agentOverrides": {
+			"sdd-init": {
+				"model": "anthropic/claude-sonnet-4-6"
+			},
+			"sdd-explore": {
+				"model": "anthropic/claude-sonnet-4-6"
+			},
+			"sdd-proposal": {
+				"model": "github-copilot/gemini-3.1-pro-preview"
+			},
+			"sdd-spec": {
+				"model": "github-copilot/gemini-3.1-pro-preview"
+			},
+			"sdd-design": {
+				"model": "github-copilot/claude-opus-4.7"
+			},
+			"sdd-tasks": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-apply": {
+				"model": "anthropic/claude-sonnet-4-6"
+			},
+			"sdd-verify": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-archive": {
+				"model": "openai-codex/gpt-5.4-mini"
+			}
+		}
+	}
+}
