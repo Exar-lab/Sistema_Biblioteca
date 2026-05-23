@@ -109,6 +109,9 @@ class FakeBookRepository:
             return None
         values = data.model_dump(exclude_unset=True)
         author_ids = values.pop("author_ids", None)
+        new_stock_total = values.get("stock_total")
+        if new_stock_total is not None and book.stock_available > new_stock_total:
+            book.stock_available = new_stock_total
         for field_name, value in values.items():
             setattr(book, field_name, value)
         if author_ids is not None:
@@ -123,7 +126,7 @@ class FakeBookRepository:
     def set_authors(self, _session: Any, book_id: int, author_ids: list[int]) -> None:
         book = self.items.get(book_id)
         if book is None:
-            raise ConflictError("Book does not exist.")
+            raise NotFoundError("Book not found.")
         self._assign_relationships(book, author_ids)
 
     def _assign_relationships(self, book: BookStub, author_ids: list[int]) -> None:
@@ -209,11 +212,27 @@ def test_book_service_updates_author_relationships_when_supplied() -> None:
     assert [author.id for author in book.authors] == [2]
 
 
+def test_book_service_clamps_available_stock_when_total_is_reduced() -> None:
+    service = BookService(FakeBookRepository())
+
+    book = service.update_book(object(), 1, BookUpdate(stock_total=1))
+
+    assert book.stock_total == 1
+    assert book.stock_available == 1
+
+
 def test_book_service_rejects_missing_author_relationship() -> None:
     service = BookService(FakeBookRepository())
 
     with pytest.raises(ConflictError, match="authors do not exist"):
         service.create_book(object(), BookCreate(title="Libro inválido", author_ids=[999]))
+
+
+def test_book_repository_set_authors_raises_not_found_for_missing_book() -> None:
+    repository = FakeBookRepository()
+
+    with pytest.raises(NotFoundError, match="Book not found"):
+        repository.set_authors(object(), 999, [1])
 
 
 def test_books_router_is_mounted_and_lists_books() -> None:

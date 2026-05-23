@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.application.errors import ConflictError
+from app.application.errors import ConflictError, NotFoundError
 from app.domain.models.author import Author
 from app.domain.models.book import Book
 from app.schemas.catalog.books import BookCreate, BookUpdate
@@ -49,6 +49,9 @@ class SqlAlchemyBookRepository:
 
         values = data.model_dump(exclude_unset=True)
         author_ids = values.pop("author_ids", None)
+        new_stock_total = values.get("stock_total")
+        if new_stock_total is not None and book.stock_available > new_stock_total:
+            book.stock_available = new_stock_total
         for field, value in values.items():
             setattr(book, field, value)
         if author_ids is not None:
@@ -75,7 +78,7 @@ class SqlAlchemyBookRepository:
 
         book = self.get_by_id(session, book_id)
         if book is None:
-            raise ConflictError("Book does not exist.")
+            raise NotFoundError("Book not found.")
         self._set_author_models(session, book, author_ids)
         try:
             session.flush()
