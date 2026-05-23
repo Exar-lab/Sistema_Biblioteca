@@ -39,17 +39,21 @@ class LoanService:
     def create_loan(self, session: Any, data: LoanCreate) -> Any:
         """Create a loan after application-owned workflow checks."""
 
-        self._ensure_user_exists(session, data.user_id)
+        user = self._ensure_user_exists(session, data.user_id)
+        if not getattr(user, "is_active", True):
+            raise ConflictError("User account is inactive.")
         self._ensure_book_exists(session, data.book_id)
         if self._loan_repository.has_overdue_loans(session, data.user_id):
             raise ConflictError("User has overdue loans.")
         return self._loan_repository.create(session, data)
 
-    def _ensure_user_exists(self, session: Any, user_id: int) -> None:
-        """Raise NotFoundError when the user does not exist."""
+    def _ensure_user_exists(self, session: Any, user_id: int) -> Any:
+        """Return the user or raise NotFoundError when it does not exist."""
 
-        if self._user_repository.get_by_id(session, user_id) is None:
+        user = self._user_repository.get_by_id(session, user_id)
+        if user is None:
             raise NotFoundError("User not found.")
+        return user
 
     def _ensure_book_exists(self, session: Any, book_id: int) -> None:
         """Raise NotFoundError when the book does not exist."""

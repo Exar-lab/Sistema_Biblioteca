@@ -192,6 +192,14 @@ def test_loan_service_raises_not_found_for_missing_user_or_book(
         service.create_loan(object(), LoanCreate(user_id=1, book_id=1, due_date=date.today() + timedelta(days=7)))
 
 
+def test_loan_service_blocks_inactive_users() -> None:
+    inactive_user_repo = FakeUserRepository(users={1: UserStub(id=1, is_active=False)})
+    service = build_service(user_repository=inactive_user_repo)
+
+    with pytest.raises(ConflictError, match="inactive"):
+        service.create_loan(object(), LoanCreate(user_id=1, book_id=1, due_date=date.today() + timedelta(days=7)))
+
+
 def test_loan_service_blocks_users_with_overdue_loans() -> None:
     service = build_service(loan_repository=FakeLoanRepository(overdue=True))
 
