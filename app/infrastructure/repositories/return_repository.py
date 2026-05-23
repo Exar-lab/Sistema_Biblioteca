@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.application.errors import ConflictError, NotFoundError
+from app.application.errors import ConflictError
 from app.domain.models.return_ import Return_
 from app.schemas.circulation.returns import ReturnCreate, ReturnUpdate
 

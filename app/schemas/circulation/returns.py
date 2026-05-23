@@ -9,7 +9,11 @@ from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
 
 
 class ReturnBase(BaseSchema):
-    """Shared return fields that map to the Oracle returns table."""
+    """Input fields for create/update operations on the Oracle returns table.
+
+    Note: return_date is server-set by Oracle (TRUNC(SYSDATE)) and is not
+    included here. It appears as a required field on ReturnRead instead.
+    """
 
     model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
 
@@ -40,7 +44,7 @@ class ReturnUpdate(BaseSchema):
 class ReturnRead(ReturnBase, IdSchema, TimestampSchema):
     """Return data returned by the API."""
 
-    return_date: date | None = None
+    return_date: date = Field(..., description="Date the book was returned (set server-side by Oracle).")
 
 
 __all__ = ["ReturnBase", "ReturnCreate", "ReturnRead", "ReturnUpdate"]
