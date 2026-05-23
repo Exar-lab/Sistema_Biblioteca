@@ -61,17 +61,27 @@ curl http://127.0.0.1:8000/health
 - [x] Add schema, service, and router tests using fakes/no Oracle dependency.
 - [x] Verification: `python -m compileall app main.py` and targeted pytest passed.
 
-### Remaining PR 2 scope
+### PR 2C — Author vertical slice
 
-- [ ] Audit ORM mappings against `database/oracle_schema.sql` for `app/domain/models/author.py`, `book.py`, and the `book_authors` association table.
-- [ ] Align Pydantic contracts in `app/schemas/catalog/authors.py` and `app/schemas/catalog/books.py` so read schemas use `from_attributes=True` and do not expose persistence-only internals.
-- [ ] Confirm or complete repository ports in `app/application/ports/{author,book}_repository.py` for required CRUD and book-author relationship methods.
-- [ ] Confirm or complete SQLAlchemy adapters in `app/infrastructure/repositories/{author,book}_repository.py`; keep SQLAlchemy query code out of services/routes.
-- [ ] Confirm or complete services in `app/application/services/{author,book}_service.py`; services may enforce workflow checks but must not import SQLAlchemy or FastAPI.
-- [ ] Confirm `app/api/v1/routers/{authors,books}.py` only inject `Session = Depends(get_db)` and service dependencies, then delegate to services.
-- [ ] Add or update focused unit tests for remaining author/book catalog service behavior using fake repositories; avoid Oracle requirements for these tests.
-- [ ] Verification: run `python -m compileall app main.py`, targeted catalog pytest, and full `python -m pytest` if scope remains small.
-- [ ] Rollback boundary: revert affected catalog models/schemas/ports/repositories/services/routes/tests only; PR 1 core remains intact.
+- [x] Audit `app/domain/models/author.py` against `database/oracle_schema.sql`.
+- [x] Align author schemas with Oracle columns and forbid persistence-only extras.
+- [x] Add SQLAlchemy author repository adapter.
+- [x] Add author application service without FastAPI or SQLAlchemy imports.
+- [x] Add `/api/v1/authors` router and mount it in `main.py`.
+- [x] Add schema, service, and router tests using fakes/no Oracle dependency.
+- [x] Verification: `python -m compileall app main.py`, targeted pytest, and full pytest passed.
+
+### PR 2D — Book vertical slice
+
+- [x] Audit `app/domain/models/book.py` and `book_authors` against `database/oracle_schema.sql`.
+- [x] Align book schemas with Oracle columns, response-only `stock_available`, positive identifiers, and forbidden request-only extras.
+- [x] Add SQLAlchemy book repository adapter with book-author relationship handling.
+- [x] Add book application service without FastAPI or SQLAlchemy imports.
+- [x] Add `/api/v1/books` router and mount it in `main.py`.
+- [x] Initialize `stock_available` from `stock_total` on create and clamp it when `stock_total` is reduced.
+- [x] Add schema, service, router, relationship, and stock consistency tests using fakes/no Oracle dependency.
+- [x] Verification: `python -m compileall app main.py`, targeted pytest, and full pytest passed.
+- [x] Rollback boundary: revert affected catalog models/schemas/ports/repositories/services/routes/tests only; PR 1 core remains intact.
 
 ## PR 3 — Circulation flows, Oracle trigger coexistence, and error translation
 
