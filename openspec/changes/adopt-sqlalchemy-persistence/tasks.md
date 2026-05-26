@@ -85,19 +85,19 @@ curl http://127.0.0.1:8000/health
 
 ## PR 3 — Circulation flows, Oracle trigger coexistence, and error translation
 
-- [ ] Audit `app/domain/models/loan.py`, `return_.py`, and `book.py` against `database/oracle_schema.sql` for `loans`, `returns`, stock columns, status defaults, timestamps, and relationships.
-- [ ] Confirm `database/oracle_schema.sql` remains the owner for checkout stock decrement, return stock restore, loan return status/date updates, and related Oracle errors.
-- [ ] Add or update domain errors in `app/application/errors.py` for not found, conflict, and out-of-stock/Oracle-trigger failures.
-- [ ] Confirm or complete ports in `app/application/ports/loan_repository.py` and `return_repository.py` for `get_by_user`, `get_by_book`, `has_overdue_loans`, active-loan lookup, and return creation.
-- [ ] Confirm or complete `app/infrastructure/repositories/loan_repository.py` to flush loan inserts and translate Oracle out-of-stock errors such as `ORA-20001` into `OutOfStockError`.
-- [ ] Confirm or complete `app/infrastructure/repositories/return_repository.py` to flush return inserts and expire/refresh affected loan/book state when trigger-owned data is needed in responses.
-- [ ] Confirm or complete `app/application/services/loan_service.py` so overdue-user blocking is application-owned and evaluated through repository ports.
-- [ ] Confirm or complete `app/application/services/return_service.py` so return workflows validate the active loan and delegate trigger-owned updates to Oracle.
-- [ ] Confirm `app/api/v1/routers/loans.py` and `returns.py` stay thin and never parse Oracle errors directly.
-- [ ] Add or update unit tests under `tests/unit/` for overdue blocking, missing loan/book/user failures, duplicate/invalid return handling, and out-of-stock translation using fakes/mocks.
-- [ ] Add or update Oracle-gated integration tests under `tests/integration/` for available-stock checkout, zero-stock rejection, return-trigger loan state, and stock restore.
-- [ ] Verification: run `python -m compileall app main.py`, `python -m pytest tests/unit`, and, when Oracle is configured, `python -m pytest tests/integration/ -m integration -v`.
-- [ ] Rollback boundary: revert circulation ports/repositories/services/routes/tests; database SQL changes should be reverted separately and reviewed first.
+- [x] Audit `app/domain/models/loan.py`, `return_.py`, and `book.py` against `database/oracle_schema.sql` for `loans`, `returns`, stock columns, status defaults, timestamps, and relationships.
+- [x] Confirm `database/oracle_schema.sql` remains the owner for checkout stock decrement, return stock restore, loan return status/date updates, and related Oracle errors.
+- [x] Add or update domain errors in `app/application/errors.py` for not found, conflict, and out-of-stock/Oracle-trigger failures.
+- [x] Confirm or complete ports in `app/application/ports/loan_repository.py` and `return_repository.py` for `get_by_user`, `get_by_book`, `has_overdue_loans`, active-loan lookup, and return creation.
+- [x] Confirm or complete `app/infrastructure/repositories/loan_repository.py` to flush loan inserts and translate Oracle out-of-stock errors such as `ORA-20001` into `OutOfStockError`.
+- [x] Confirm or complete `app/infrastructure/repositories/return_repository.py` to flush return inserts and expire/refresh affected loan/book state when trigger-owned data is needed in responses.
+- [x] Confirm or complete `app/application/services/loan_service.py` so overdue-user blocking is application-owned and evaluated through repository ports.
+- [x] Confirm or complete `app/application/services/return_service.py` so return workflows validate the active loan and delegate trigger-owned updates to Oracle.
+- [x] Confirm `app/api/v1/routers/loans.py` and `returns.py` stay thin and never parse Oracle errors directly.
+- [x] Add or update unit tests for overdue blocking, missing loan/book/user failures, duplicate/invalid return handling, and out-of-stock translation using fakes/mocks. Evidence uses the existing flat slice-test convention in `tests/test_loans_slice.py` and `tests/test_returns_slice.py` rather than a `tests/unit/` directory.
+- [ ] Add or update Oracle-gated integration tests under `tests/integration/` for available-stock checkout, zero-stock rejection, return-trigger loan state, and stock restore. Not complete: no prepared Oracle integration environment or `tests/integration/` suite exists yet; see `verify-report.md`.
+- [x] Verification: run `python -m compileall app main.py`, `python -m pytest tests/unit`, and, when Oracle is configured, `python -m pytest tests/integration/ -m integration -v`. Reconciled evidence: `compileall` and full `pytest` passed through the sibling venv; `tests/unit` is represented by flat slice tests; Oracle-gated checks were not run because Oracle is not configured.
+- [x] Rollback boundary: revert circulation ports/repositories/services/routes/tests; database SQL changes should be reverted separately and reviewed first.
 
 ## PR 4 — Cross-cutting cleanup, reporting path, and review guardrails
 
@@ -111,10 +111,10 @@ curl http://127.0.0.1:8000/health
 
 ## Final Acceptance Checklist
 
-- [ ] `app/core/database.py` is the only normal runtime session factory and request sessions commit/rollback/close correctly.
-- [ ] FastAPI routes in `app/api/v1/routers/` delegate to services and do not execute normal workflow SQL directly.
-- [ ] Services in `app/application/services/` enforce workflow rules without SQLAlchemy or FastAPI imports.
-- [ ] SQLAlchemy code and Oracle error translation live in `app/infrastructure/repositories/`.
-- [ ] ORM models in `app/domain/models/` mirror `database/oracle_schema.sql` without replacing it as the source for Oracle-owned artifacts.
-- [ ] `database/oracle_schema.sql` remains present and documented for schema/bootstrap/triggers/constraints/indexes/seeds.
-- [ ] Unit tests cover service rules without Oracle; integration tests or documented checks cover trigger-sensitive flows when Oracle is available.
+- [x] `app/core/database.py` is the only normal runtime session factory and request sessions commit/rollback/close correctly.
+- [x] FastAPI routes in `app/api/v1/routers/` delegate to services and do not execute normal workflow SQL directly.
+- [x] Services in `app/application/services/` enforce workflow rules without SQLAlchemy or FastAPI imports.
+- [x] SQLAlchemy code and Oracle error translation live in `app/infrastructure/repositories/`.
+- [x] ORM models in `app/domain/models/` mirror `database/oracle_schema.sql` without replacing it as the source for Oracle-owned artifacts.
+- [x] `database/oracle_schema.sql` remains present and documented for schema/bootstrap/triggers/constraints/indexes/seeds.
+- [ ] Unit tests cover service rules without Oracle; integration tests or documented checks cover trigger-sensitive flows when Oracle is available. Unit/slice tests pass without Oracle; Oracle-trigger integration execution remains a known gap documented in `verify-report.md`.
