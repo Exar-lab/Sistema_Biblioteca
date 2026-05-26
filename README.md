@@ -232,6 +232,15 @@ Regla de ownership:
 
 No borres un `.sql` solo porque exista un modelo ORM. Si se elimina o reemplaza un artefacto Oracle, el cambio debe explicar cuál es el reemplazo y por qué.
 
+Checklist liviano para revisar slices:
+
+- Las rutas FastAPI son finas: validan entrada, inyectan dependencias y delegan.
+- Los servicios no importan FastAPI ni SQLAlchemy; coordinan reglas de aplicación.
+- Los repositorios concentran ORM, SQLAlchemy y consultas agregadas/reportes.
+- Los errores de dominio se traducen a HTTP en `app/api/exception_handlers.py`, no en cada ruta.
+- `database/oracle_schema.sql` sigue declarando triggers, constraints e índices propios de Oracle.
+- Cada regla nueva declara ownership: servicio de aplicación, repositorio o artefacto Oracle.
+
 ---
 
 ## 🧭 Próximos pasos

@@ -26,8 +26,8 @@ class LoanRepository(Protocol):
         """
         ...
 
-    def update(self, session: Any, id: int, data: Any) -> Any:
-        """Update the loan with *id* and return the updated instance."""
+    def update(self, session: Any, id: int, data: Any) -> Any | None:
+        """Update the loan with *id*, or return None if it does not exist."""
         ...
 
     def delete(self, session: Any, id: int) -> bool:
@@ -40,4 +40,8 @@ class LoanRepository(Protocol):
 
     def get_by_book(self, session: Any, book_id: int) -> list[Any]:
         """Return all loans for the given *book_id*."""
+        ...
+
+    def has_overdue_loans(self, session: Any, user_id: int) -> bool:
+        """Return whether the user has active overdue loans."""
         ...

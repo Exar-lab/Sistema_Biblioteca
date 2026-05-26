@@ -23,10 +23,14 @@ class ReturnRepository(Protocol):
         """Persist a new return record and return the created instance."""
         ...
 
-    def update(self, session: Any, id: int, data: Any) -> Any:
-        """Update the return record with *id* and return the updated instance."""
+    def update(self, session: Any, id: int, data: Any) -> Any | None:
+        """Update the return record with *id*, or return None if it does not exist."""
         ...
 
     def delete(self, session: Any, id: int) -> bool:
         """Delete the return record with *id*. Return True if deleted, False if not found."""
+        ...
+
+    def get_by_loan(self, session: Any, loan_id: int) -> Any | None:
+        """Return the return record for *loan_id*, or None if the loan has not been returned."""
         ...

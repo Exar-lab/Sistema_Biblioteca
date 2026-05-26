@@ -1,23 +1,34 @@
 """Loan schemas."""
 
-from datetime import date, datetime
+from datetime import date
+from typing import Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field, model_validator
 
 from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
 from app.schemas.catalog.books import BookRead
 from app.schemas.users import UserRead
 
+LoanStatus = Literal["ACTIVE", "RETURNED", "OVERDUE", "CANCELLED"]
+
 
 class LoanBase(BaseSchema):
-    """Shared loan fields."""
+    """Shared loan fields that map to the Oracle loans table."""
+
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
 
     user_id: int = Field(..., gt=0, description="Borrowing user identifier.")
     book_id: int = Field(..., gt=0, description="Borrowed book identifier.")
     loan_date: date = Field(default_factory=date.today, description="Loan start date.")
     due_date: date = Field(..., description="Date when the book must be returned.")
-    notes: str | None = Field(default=None, max_length=500, description="Optional loan notes.")
-    is_active: bool = Field(default=True, description="Whether the loan is open.")
+
+    @model_validator(mode="after")
+    def validate_due_date(self) -> "LoanBase":
+        """Ensure Oracle's due-date invariant is enforced before persistence."""
+
+        if self.due_date < self.loan_date:
+            raise ValueError("due_date must be on or after loan_date")
+        return self
 
 
 class LoanCreate(LoanBase):
@@ -25,20 +36,22 @@ class LoanCreate(LoanBase):
 
 
 class LoanUpdate(BaseSchema):
-    """Payload used to update a loan."""
+    """Payload used to update loan workflow state."""
+
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
 
     due_date: date | None = None
-    notes: str | None = Field(default=None, max_length=500)
-    is_active: bool | None = None
+    return_date: date | None = None
+    status: LoanStatus | None = None
 
 
 class LoanRead(LoanBase, IdSchema, TimestampSchema):
     """Loan data returned by the API."""
 
-    returned_at: datetime | None = Field(default=None, description="Return timestamp when the book was returned.")
-    is_overdue: bool = Field(default=False, description="Whether the loan is overdue.")
+    return_date: date | None = Field(default=None, description="Date when the book was returned.")
+    status: LoanStatus = Field(default="ACTIVE", description="Current loan workflow status.")
     user: UserRead | None = None
     book: BookRead | None = None
 
 
-__all__ = ["LoanBase", "LoanCreate", "LoanUpdate", "LoanRead"]
+__all__ = ["LoanBase", "LoanCreate", "LoanRead", "LoanStatus", "LoanUpdate"]

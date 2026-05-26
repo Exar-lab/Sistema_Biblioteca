@@ -232,9 +232,9 @@ Repositories are the boundary for infrastructure-specific errors:
 ### Fast local checks
 
 - `python -m compileall app main.py`
-- `python -m pytest tests/unit`
+- `python -m pytest`
 - Route/session lifecycle tests with monkeypatched `SessionLocal`.
-- Service tests using fake repository ports.
+- Service tests using fake repository ports. In this repo, no-Oracle unit/service coverage currently lives in flat `tests/test_*_slice.py` files rather than `tests/unit/`.
 
 ### Oracle-gated checks
 
