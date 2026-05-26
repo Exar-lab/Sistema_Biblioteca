@@ -101,13 +101,13 @@ curl http://127.0.0.1:8000/health
 
 ## PR 4 — Cross-cutting cleanup, reporting path, and review guardrails
 
-- [ ] Search `app/api`, `app/application`, and `app/infrastructure` for direct `SessionLocal(`, `create_engine(`, route-level `execute(`, and ad hoc `text(` calls; move normal runtime persistence into repositories, leaving only infrastructure diagnostics such as health checks in `app/core/database.py`.
-- [ ] If reporting endpoints exist or are added, implement repository/service methods under `app/infrastructure/repositories/` and `app/application/services/`; isolate any unavoidable Oracle-specific SQL in repository methods with comments explaining why.
-- [ ] Register or verify domain exception translation in `app/api/exception_handlers.py` and `main.py` so routes do not duplicate HTTP error mapping.
-- [ ] Update `AGENTS.md` or setup docs only if executable verification commands changed.
-- [ ] Add a lightweight review checklist to `README.md` or a project doc covering: routes thin, services no SQLAlchemy/FastAPI imports, repositories own ORM, Oracle `.sql` preserved, rule owner declared.
-- [ ] Verification: run `python -m compileall app main.py`, `python -m pytest`, and Oracle-gated checks when configured.
-- [ ] Rollback boundary: revert reporting/cleanup/doc-only files independently; do not roll back prior PRs unless a contract regression is found.
+- [x] Search `app/api`, `app/application`, and `app/infrastructure` for direct `SessionLocal(`, `create_engine(`, route-level `execute(`, and ad hoc `text(` calls; move normal runtime persistence into repositories, leaving only infrastructure diagnostics such as health checks in `app/core/database.py`.
+- [x] If reporting endpoints exist or are added, implement repository/service methods under `app/infrastructure/repositories/` and `app/application/services/`; isolate any unavoidable Oracle-specific SQL in repository methods with comments explaining why.
+- [x] Register or verify domain exception translation in `app/api/exception_handlers.py` and `main.py` so routes do not duplicate HTTP error mapping.
+- [x] Update `AGENTS.md` or setup docs only if executable verification commands changed.
+- [x] Add a lightweight review checklist to `README.md` or a project doc covering: routes thin, services no SQLAlchemy/FastAPI imports, repositories own ORM, Oracle `.sql` preserved, rule owner declared.
+- [x] Verification: run `python -m compileall app main.py`, `python -m pytest`, and Oracle-gated checks when configured.
+- [x] Rollback boundary: revert reporting/cleanup/doc-only files independently; do not roll back prior PRs unless a contract regression is found.
 
 ## Final Acceptance Checklist
 

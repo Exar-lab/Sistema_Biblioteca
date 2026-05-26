@@ -7,7 +7,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.api.v1.routers.authors import router as authors_router
 from app.api.v1.routers.books import router as books_router
 from app.api.v1.routers.categories import router as categories_router
+from app.api.exception_handlers import register_exception_handlers
 from app.api.v1.routers.loans import router as loans_router
+from app.api.v1.routers.reports import router as reports_router
 from app.api.v1.routers.returns import router as returns_router
 from app.api.v1.routers.roles import router as roles_router
 from app.core.database import SessionLocal, run_db_smoke_check
@@ -22,7 +24,10 @@ app = FastAPI(
 app.include_router(authors_router, prefix="/api/v1")
 app.include_router(books_router, prefix="/api/v1")
 app.include_router(categories_router, prefix="/api/v1")
+register_exception_handlers(app)
+
 app.include_router(loans_router, prefix="/api/v1")
+app.include_router(reports_router, prefix="/api/v1")
 app.include_router(returns_router, prefix="/api/v1")
 app.include_router(roles_router, prefix="/api/v1")
 

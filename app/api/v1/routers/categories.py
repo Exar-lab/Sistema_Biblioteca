@@ -2,10 +2,9 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
-from app.application.errors import ConflictError, NotFoundError
 from app.application.services.category_service import CategoryService
 from app.core.database import get_db
 from app.infrastructure.repositories.category_repository import category_repository
@@ -39,20 +38,14 @@ def create_category(
 ) -> object:
     """Create a category."""
 
-    try:
-        return service.create_category(db, payload)
-    except ConflictError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    return service.create_category(db, payload)
 
 
 @router.get("/{category_id}", response_model=CategoryRead)
 def get_category(category_id: int, db: DbSession, service: CategoryServiceDep) -> object:
     """Return a category by id."""
 
-    try:
-        return service.get_category(db, category_id)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return service.get_category(db, category_id)
 
 
 @router.patch("/{category_id}", response_model=CategoryRead)
@@ -64,24 +57,14 @@ def update_category(
 ) -> object:
     """Update a category."""
 
-    try:
-        return service.update_category(db, category_id, payload)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ConflictError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    return service.update_category(db, category_id, payload)
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_category(category_id: int, db: DbSession, service: CategoryServiceDep) -> Response:
     """Delete a category."""
 
-    try:
-        service.delete_category(db, category_id)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ConflictError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    service.delete_category(db, category_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
