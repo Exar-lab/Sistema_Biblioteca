@@ -1,8 +1,9 @@
 """Report API routes."""
 
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from app.application.services.report_service import ReportService
 from app.core.database import get_db
@@ -18,7 +19,7 @@ def get_report_service() -> ReportService:
     return ReportService(report_repository)
 
 
-DbSession = Annotated[Any, Depends(get_db)]
+DbSession = Annotated[Session, Depends(get_db)]
 ReportServiceDep = Annotated[ReportService, Depends(get_report_service)]
 
 

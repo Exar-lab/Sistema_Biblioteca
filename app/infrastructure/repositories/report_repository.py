@@ -1,6 +1,6 @@
 """SQLAlchemy adapter for dashboard reports."""
 
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import desc, func, select
@@ -121,6 +121,8 @@ class SqlAlchemyReportRepository:
     def _as_date(self, value: Any) -> date:
         """Normalize Oracle date/datetime values for the Pydantic report schema."""
 
+        if isinstance(value, datetime):
+            return value.date()
         if isinstance(value, date):
             return value
         return value.date()
