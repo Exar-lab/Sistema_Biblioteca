@@ -96,7 +96,7 @@ curl http://127.0.0.1:8000/health
 - [x] Confirm `app/api/v1/routers/loans.py` and `returns.py` stay thin and never parse Oracle errors directly.
 - [x] Add or update unit tests for overdue blocking, missing loan/book/user failures, duplicate/invalid return handling, and out-of-stock translation using fakes/mocks. Evidence uses the existing flat slice-test convention in `tests/test_loans_slice.py` and `tests/test_returns_slice.py` rather than a `tests/unit/` directory.
 - [ ] Add or update Oracle-gated integration tests under `tests/integration/` for available-stock checkout, zero-stock rejection, return-trigger loan state, and stock restore. Not complete: no prepared Oracle integration environment or `tests/integration/` suite exists yet; see `verify-report.md`.
-- [x] Verification: run `python -m compileall app main.py`, `python -m pytest tests/unit`, and, when Oracle is configured, `python -m pytest tests/integration/ -m integration -v`. Reconciled evidence: `compileall` and full `pytest` passed through the sibling venv; `tests/unit` is represented by flat slice tests; Oracle-gated checks were not run because Oracle is not configured.
+- [x] Verification: run `python -m compileall app main.py`, `python -m pytest`, and, when Oracle is configured, `python -m pytest tests/integration/ -m integration -v`. Reconciled evidence: `compileall` and full `pytest` passed; no-Oracle unit/service coverage is represented by flat slice tests; Oracle-gated checks were not run because Oracle is not configured.
 - [x] Rollback boundary: revert circulation ports/repositories/services/routes/tests; database SQL changes should be reverted separately and reviewed first.
 
 ## PR 4 — Cross-cutting cleanup, reporting path, and review guardrails

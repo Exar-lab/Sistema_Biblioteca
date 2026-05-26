@@ -6,10 +6,14 @@ Base reviewed: `origin/feat/circulation-returns-slice` after PR #34 merge (`0cf9
 
 ## Commands
 
+Reproducible commands from the repository root after installing dependencies or activating a project virtual environment:
+
 ```bash
-../Sistema_Biblioteca/venv/Scripts/python.exe -m compileall app main.py
-../Sistema_Biblioteca/venv/Scripts/python.exe -m pytest
+python -m compileall app main.py
+python -m pytest
 ```
+
+Recorded local run used `../Sistema_Biblioteca/venv/Scripts/python.exe` as the Python interpreter.
 
 Results:
 
