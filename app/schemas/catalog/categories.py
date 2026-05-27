@@ -1,12 +1,14 @@
 """Category schemas."""
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.schemas.base import BaseSchema, IdSchema, TimestampSchema
 
 
 class CategoryBase(BaseSchema):
     """Shared category fields."""
+
+    model_config = ConfigDict(extra="forbid")
 
     name: str = Field(..., min_length=2, max_length=80, description="Category name.")
     description: str | None = Field(default=None, max_length=500, description="Category description.")
@@ -19,6 +21,8 @@ class CategoryCreate(CategoryBase):
 
 class CategoryUpdate(BaseSchema):
     """Payload used to update a category."""
+
+    model_config = ConfigDict(extra="forbid")
 
     name: str | None = Field(default=None, min_length=2, max_length=80)
     description: str | None = Field(default=None, max_length=500)

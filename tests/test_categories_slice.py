@@ -68,6 +68,14 @@ def test_category_schema_allows_oracle_description_length() -> None:
     assert payload.description == "x" * 500
 
 
+def test_category_schema_rejects_extra_fields() -> None:
+    with pytest.raises(ValidationError):
+        CategoryCreate(name="Historia", legacy_code="HIS")
+
+    with pytest.raises(ValidationError):
+        CategoryUpdate(legacy_code="HIS")
+
+
 @pytest.mark.parametrize("description", ["x" * 501])
 def test_category_schema_rejects_description_above_oracle_length(description: str) -> None:
     with pytest.raises(ValidationError):
