@@ -19,8 +19,8 @@ class UserRepository(Protocol):
         """Persist a new user and return the created instance."""
         ...
 
-    def update(self, session: Any, id: int, data: Any) -> Any:
-        """Update the user with *id* and return the updated instance."""
+    def update(self, session: Any, id: int, data: Any) -> Any | None:
+        """Update the user with *id*, or return None if it does not exist."""
         ...
 
     def delete(self, session: Any, id: int) -> bool:
