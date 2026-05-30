@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.5.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.4.0...sistema-biblioteca-v0.5.0) (2026-05-30)
+
+
+### Features
+
+* **catalog:** add author CRUD slice ([e6810d2](https://github.com/Exar-lab/Sistema_Biblioteca/commit/e6810d28107cca9275c8985dea300a49a92982a9))
+* **catalog:** add author CRUD slice ([cd1d24e](https://github.com/Exar-lab/Sistema_Biblioteca/commit/cd1d24ec9935c3f4516e3a416990a18a4ec73756))
+* **catalog:** add book CRUD slice ([7f61f71](https://github.com/Exar-lab/Sistema_Biblioteca/commit/7f61f71fa01eb9cfaa6c196eb31be017a891efae))
+* **catalog:** add book CRUD slice ([fa56f2a](https://github.com/Exar-lab/Sistema_Biblioteca/commit/fa56f2a6da517031cc9a28d09b9c752239b7b137))
+* **catalog:** add category CRUD slice ([982a377](https://github.com/Exar-lab/Sistema_Biblioteca/commit/982a3775e29b49db1ca696a969e59de549b24519))
+* **catalog:** add role CRUD slice ([79bde68](https://github.com/Exar-lab/Sistema_Biblioteca/commit/79bde6890f85e5b5bb3a3c18256d88ca139a9bd9))
+* **circulation:** add loans CRUD slice ([d317715](https://github.com/Exar-lab/Sistema_Biblioteca/commit/d317715698a495f22a3876ff2f12429f2e510049))
+* **circulation:** add returns CRUD slice ([581dd4c](https://github.com/Exar-lab/Sistema_Biblioteca/commit/581dd4cfaa5a324b19456e2e9714fca20681d699))
+* **reports:** add dashboard guardrails slice ([0cf92ea](https://github.com/Exar-lab/Sistema_Biblioteca/commit/0cf92ea46f6d13547361e709567f0e32fa36de2f))
+* **reports:** add dashboard guardrails slice ([da14a6a](https://github.com/Exar-lab/Sistema_Biblioteca/commit/da14a6a903854c7591779a480c104dcf377208ab))
+
+
+### Bug Fixes
+
+* **catalog:** address book review feedback ([f0ee7a8](https://github.com/Exar-lab/Sistema_Biblioteca/commit/f0ee7a8da1191f8e9cedf3adf99ffdb46bce123d))
+* **catalog:** align category repository contract ([49efca3](https://github.com/Exar-lab/Sistema_Biblioteca/commit/49efca3f3ec8f58ce6c5e15f9565337f3a0bec0d))
+* **circulation:** block inactive users from creating loans ([4d4b640](https://github.com/Exar-lab/Sistema_Biblioteca/commit/4d4b64023d5eeb290ea57c1322d627ddc0cf6c86))
+* **persistence:** align category and user contracts ([3ce7443](https://github.com/Exar-lab/Sistema_Biblioteca/commit/3ce7443f99b97cede21f26b9a6bcf4028c9396aa))
+* **reports:** normalize dashboard month dates ([f2cabfc](https://github.com/Exar-lab/Sistema_Biblioteca/commit/f2cabfccf2c1f026ffd0f5b1cd7811f95cd6238e))
+* **review:** address Copilot feedback on returns slice ([93351d2](https://github.com/Exar-lab/Sistema_Biblioteca/commit/93351d207b0342069c0356c225f356ea3f9b6344))
+
 ## [0.4.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.3.0...sistema-biblioteca-v0.4.0) (2026-05-21)
 
 
