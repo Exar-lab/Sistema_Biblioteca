@@ -1,6 +1,7 @@
 """Shared FastAPI dependencies for auth and database."""
 
-from typing import Annotated
+from collections.abc import Callable
+from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -43,4 +44,22 @@ def get_current_user(
     return UserRead.model_validate(user)
 
 
-__all__ = ["get_db", "get_current_user", "security_scheme"]
+def require_role(*allowed_roles: str) -> Callable[[UserRead], UserRead]:
+    """Return a dependency that checks the current user has one of *allowed_roles*."""
+
+    def _role_checker(current_user: Annotated[UserRead, Depends(get_current_user)]) -> UserRead:
+        if current_user.role is None or current_user.role.name not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions.",
+            )
+        return current_user
+
+    return _role_checker
+
+
+AdminOnly = Annotated[UserRead, Depends(require_role("Admin"))]
+"""Composite dependency that requires an authenticated admin user."""
+
+
+__all__ = ["get_db", "get_current_user", "require_role", "AdminOnly", "security_scheme"]

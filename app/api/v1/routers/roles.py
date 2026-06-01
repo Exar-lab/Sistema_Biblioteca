@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import AdminOnly
 from app.application.services.role_service import RoleService
 from app.core.database import get_db
 from app.infrastructure.repositories.role_repository import role_repository
@@ -31,7 +32,7 @@ def list_roles(db: DbSession, service: RoleServiceDep) -> list[object]:
 
 
 @router.post("/", response_model=RoleRead, status_code=status.HTTP_201_CREATED)
-def create_role(payload: RoleCreate, db: DbSession, service: RoleServiceDep) -> object:
+def create_role(payload: RoleCreate, db: DbSession, service: RoleServiceDep, _: AdminOnly) -> object:
     """Create a role."""
 
     return service.create_role(db, payload)
@@ -45,14 +46,14 @@ def get_role(role_id: int, db: DbSession, service: RoleServiceDep) -> object:
 
 
 @router.patch("/{role_id}", response_model=RoleRead)
-def update_role(role_id: int, payload: RoleUpdate, db: DbSession, service: RoleServiceDep) -> object:
+def update_role(role_id: int, payload: RoleUpdate, db: DbSession, service: RoleServiceDep, _: AdminOnly) -> object:
     """Update a role."""
 
     return service.update_role(db, role_id, payload)
 
 
 @router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_role(role_id: int, db: DbSession, service: RoleServiceDep) -> Response:
+def delete_role(role_id: int, db: DbSession, service: RoleServiceDep, _: AdminOnly) -> Response:
     """Delete a role."""
 
     service.delete_role(db, role_id)
