@@ -2,10 +2,10 @@
 
 from typing import Any
 
-from app.application.errors import NotFoundError
+from app.application.errors import InactiveUserError, InvalidCredentialsError
 from app.application.ports.user_repository import UserRepository
 from app.core.security import create_access_token, hash_password, verify_password
-from app.schemas.auth import LoginResponse, Token
+from app.schemas.auth import LoginResponse
 from app.schemas.users import UserCreate, UserRead
 
 
@@ -18,14 +18,19 @@ class AuthService:
     def authenticate(self, session: Any, username: str, password: str) -> LoginResponse:
         """Validate credentials and return a signed JWT with user profile.
 
-        Raises NotFoundError if the user does not exist or the password is wrong.
+        Raises InvalidCredentialsError if the user does not exist or password is wrong.
+        Raises InactiveUserError if the user account is disabled.
         """
 
         user = self._user_repository.get_by_username(session, username)
         if user is None or not verify_password(password, user.password_hash):
-            raise NotFoundError("Invalid username or password.")
+            raise InvalidCredentialsError("Invalid username or password.")
 
-        token_data = {"sub": str(user.id), "username": user.username, "role": user.role.name if user.role else "Usuario"}
+        if user.is_active is False:
+            raise InactiveUserError("User account is inactive.")
+
+        role_name = user.role.name if user.role else "Usuario"
+        token_data = {"sub": str(user.id), "username": user.username, "role": role_name}
         access_token = create_access_token(data=token_data)
 
         return LoginResponse(

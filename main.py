@@ -4,6 +4,7 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.api.v1.routers.auth import router as auth_router
 from app.api.v1.routers.authors import router as authors_router
 from app.api.v1.routers.books import router as books_router
 from app.api.v1.routers.categories import router as categories_router
@@ -21,6 +22,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(authors_router, prefix="/api/v1")
 app.include_router(books_router, prefix="/api/v1")
 app.include_router(categories_router, prefix="/api/v1")
