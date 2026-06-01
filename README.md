@@ -184,7 +184,13 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Luego editá `.env` con tu conexión Oracle real (`DATABASE_URL`).
+Luego editá `.env` con tu conexión Oracle real (`DATABASE_URL`) y una clave JWT segura (`SECRET_KEY`).
+
+Para generar una clave local:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
 
 4. Verificar sintaxis y ejecutar:
 
@@ -206,6 +212,54 @@ Respuesta esperada con DB disponible:
 ```
 
 Si Oracle no está disponible o las credenciales son inválidas, el endpoint responde `503`.
+
+---
+
+## 🔐 Autenticación JWT
+
+La API expone login y perfil autenticado bajo `/api/v1/auth`.
+
+### Flujo rápido
+
+1. Enviar credenciales a `POST /api/v1/auth/login`:
+
+```json
+{
+  "username": "admin",
+  "password": "tu-password"
+}
+```
+
+2. Guardar `access_token` de la respuesta.
+3. Enviar el token en endpoints protegidos:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+4. Verificar el perfil actual:
+
+```powershell
+curl -H "Authorization: Bearer <access_token>" http://127.0.0.1:8000/api/v1/auth/me
+```
+
+### Variables requeridas
+
+| Variable | Uso |
+| --- | --- |
+| `SECRET_KEY` | Firma los JWT. Debe ser privada y distinta por ambiente. |
+| `ALGORITHM` | Algoritmo JWT. Valor por defecto: `HS256`. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Duración del token en minutos. |
+
+### Errores comunes
+
+| Código | Causa común | Qué revisar |
+| --- | --- | --- |
+| `401` | Token ausente, expirado, inválido o con `sub` mal formado. | Reenviar login y usar `Authorization: Bearer <token>`. |
+| `401` | Usuario del token no existe. | Verificar que el usuario siga activo en la base. |
+| `403` | Usuario autenticado sin permisos suficientes. | Confirmar que el rol sea administrador para endpoints administrativos. |
+
+Los endpoints de escritura de roles requieren usuario autenticado con rol administrador. La validación normaliza mayúsculas/minúsculas para evitar diferencias como `Admin` vs `admin`.
 
 ---
 

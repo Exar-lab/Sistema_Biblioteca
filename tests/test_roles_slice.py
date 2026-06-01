@@ -12,11 +12,13 @@ from pydantic import ValidationError
 os.environ["DATABASE_URL"] = "oracle+oracledb://user:pass@127.0.0.1:1/?service_name=FREEPDB1"
 
 import main  # noqa: E402
+from app.api.dependencies import get_current_user  # noqa: E402
 from app.api.v1.routers.roles import get_role_service  # noqa: E402
 from app.application.errors import ConflictError, NotFoundError  # noqa: E402
 from app.application.services.role_service import RoleService  # noqa: E402
 from app.core.database import get_db  # noqa: E402
-from app.schemas.roles import RoleCreate, RoleUpdate  # noqa: E402
+from app.schemas.roles import RoleCreate, RoleRead, RoleUpdate  # noqa: E402
+from app.schemas.users import UserRead  # noqa: E402
 
 
 @dataclass
@@ -113,3 +115,44 @@ def test_roles_router_maps_missing_role_to_404() -> None:
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Role not found."}
+
+
+def _current_user_with_role(role_name: str) -> UserRead:
+    return UserRead(
+        id=1,
+        username="admin",
+        full_name="Admin User",
+        email="admin@example.com",
+        role_id=1,
+        role=RoleRead(id=1, name=role_name),
+    )
+
+
+def test_roles_create_allows_admin_role_case_insensitively() -> None:
+    service = RoleService(FakeRoleRepository())
+
+    main.app.dependency_overrides[get_role_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    main.app.dependency_overrides[get_current_user] = lambda: _current_user_with_role("admin")
+    try:
+        response = TestClient(main.app).post("/api/v1/roles/", json={"name": "Supervisor"})
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    assert response.json()["name"] == "Supervisor"
+
+
+def test_roles_create_rejects_non_admin_user() -> None:
+    service = RoleService(FakeRoleRepository())
+
+    main.app.dependency_overrides[get_role_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    main.app.dependency_overrides[get_current_user] = lambda: _current_user_with_role("Usuario")
+    try:
+        response = TestClient(main.app).post("/api/v1/roles/", json={"name": "Supervisor"})
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Insufficient permissions."}

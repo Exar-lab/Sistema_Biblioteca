@@ -44,6 +44,11 @@ class SqlAlchemyUserRepository:
         session.refresh(user)
         return user
 
+    def get_by_username(self, session: Session, username: str) -> LibraryUser | None:
+        """Return the user with *username*, or None if it does not exist."""
+
+        return session.scalar(select(LibraryUser).where(LibraryUser.username == username))
+
     def delete(self, session: Session, id: int) -> bool:
         """Delete a user. Return True if deleted, False if not found."""
 

@@ -23,6 +23,10 @@ class UserRepository(Protocol):
         """Update the user with *id*, or return None if it does not exist."""
         ...
 
+    def get_by_username(self, session: Any, username: str) -> Any | None:
+        """Return the user with *username*, or None if it does not exist."""
+        ...
+
     def delete(self, session: Any, id: int) -> bool:
         """Delete the user with *id*. Return True if deleted, False if not found."""
         ...

@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SQLALCHEMY_ECHO: bool = False
 
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
 
 @lru_cache
 def get_settings() -> Settings:

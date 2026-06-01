@@ -24,3 +24,17 @@ class ConflictError(Exception):
 
     def __init__(self, message: str = "A conflicting record already exists.") -> None:
         super().__init__(message)
+
+
+class InvalidCredentialsError(Exception):
+    """Raised when login credentials are invalid."""
+
+    def __init__(self, message: str = "Invalid username or password.") -> None:
+        super().__init__(message)
+
+
+class InactiveUserError(Exception):
+    """Raised when an inactive user attempts an action."""
+
+    def __init__(self, message: str = "User account is inactive.") -> None:
+        super().__init__(message)
