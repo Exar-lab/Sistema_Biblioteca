@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.5.0...sistema-biblioteca-v0.6.0) (2026-06-01)
+
+
+### Features
+
+* **auth:** add auth router with login/me endpoints, JWT dependency, and error handling ([2eb4c22](https://github.com/Exar-lab/Sistema_Biblioteca/commit/2eb4c22e0437e10b9732249a1e5b3fa58a453573))
+* **auth:** add AuthService with authenticate and register methods ([b7a5f19](https://github.com/Exar-lab/Sistema_Biblioteca/commit/b7a5f195f710e3cd08772deac0e00e4ed4ae348e))
+* **auth:** add get_by_username, JWT config, and security utilities ([b9ae997](https://github.com/Exar-lab/Sistema_Biblioteca/commit/b9ae997fd68f52971906581392a08421a5173099))
+* **auth:** add passlib and python-jose dependencies for JWT auth ([6f1e144](https://github.com/Exar-lab/Sistema_Biblioteca/commit/6f1e1444039d602ee4b70cad9e55f3d3f4ce2912))
+* **auth:** add require_role dependency and protect admin endpoints ([4201c6a](https://github.com/Exar-lab/Sistema_Biblioteca/commit/4201c6a526c02aff46e58a3e13870ed4793ee568))
+* JWT authentication with login/me endpoints and role-based access ([fecefe2](https://github.com/Exar-lab/Sistema_Biblioteca/commit/fecefe2a58e6b7cade03a9ab6c0cf4485aa29be8))
+
+
+### Bug Fixes
+
+* **auth:** harden JWT validation and docs ([49f9c5f](https://github.com/Exar-lab/Sistema_Biblioteca/commit/49f9c5f84b236b4131865cb0cffe85531ab42226))
+
 ## [0.5.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.4.0...sistema-biblioteca-v0.5.0) (2026-05-30)
 
 
