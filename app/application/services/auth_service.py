@@ -29,7 +29,7 @@ class AuthService:
         if user.is_active is False:
             raise InactiveUserError("User account is inactive.")
 
-        role_name = user.role.name if user.role else "Usuario"
+        role_name = (user.role.name if user.role else "Usuario").strip()
         token_data = {"sub": str(user.id), "username": user.username, "role": role_name}
         access_token = create_access_token(data=token_data)
 
