@@ -327,5 +327,980 @@ WHEN NOT MATCHED THEN
 
 COMMIT;
 
+-- =============================================================================
+-- Sequences (idempotent) — seq_*_id for each aggregate
+-- =============================================================================
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_ROLES_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_roles_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.roles.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_roles_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_roles_id already exists; skipped.');
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_LIBRARY_USERS_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_library_users_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.library_users.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_library_users_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_library_users_id already exists; skipped.');
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_CATEGORIES_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_categories_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.categories.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_categories_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_categories_id already exists; skipped.');
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_AUTHORS_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_authors_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.authors.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_authors_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_authors_id already exists; skipped.');
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_BOOKS_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_books_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.books.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_books_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_books_id already exists; skipped.');
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_LOANS_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_loans_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.loans.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_loans_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_loans_id already exists; skipped.');
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_RETURNS_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_returns_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.returns.id';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_returns_id.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_returns_id already exists; skipped.');
+    END IF;
+END;
+/
+
+-- =============================================================================
+-- PL/SQL Packages
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- pkg_roles
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_roles AS
+    PROCEDURE p_insert(
+        p_name        IN  BIBLIOTECA.roles.name%TYPE,
+        p_description IN  BIBLIOTECA.roles.description%TYPE,
+        p_id          OUT BIBLIOTECA.roles.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.roles.id%TYPE,
+        p_name        IN BIBLIOTECA.roles.name%TYPE,
+        p_description IN BIBLIOTECA.roles.description%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.roles.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.roles.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+END pkg_roles;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_roles AS
+
+    PROCEDURE p_insert(
+        p_name        IN  BIBLIOTECA.roles.name%TYPE,
+        p_description IN  BIBLIOTECA.roles.description%TYPE,
+        p_id          OUT BIBLIOTECA.roles.id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.roles (id, name, description)
+        VALUES (BIBLIOTECA.seq_roles_id.NEXTVAL, p_name, p_description)
+        RETURNING id INTO p_id;
+    END p_insert;
+
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.roles.id%TYPE,
+        p_name        IN BIBLIOTECA.roles.name%TYPE,
+        p_description IN BIBLIOTECA.roles.description%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.roles
+        SET name        = p_name,
+            description = p_description
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.roles.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.roles WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.roles.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, name, description, created_at, updated_at
+            FROM BIBLIOTECA.roles
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, name, description, created_at, updated_at
+            FROM BIBLIOTECA.roles
+            ORDER BY id;
+    END p_list;
+
+END pkg_roles;
+/
+
+-- -----------------------------------------------------------------------------
+-- pkg_library_users
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_library_users AS
+    PROCEDURE p_insert(
+        p_username      IN  BIBLIOTECA.library_users.username%TYPE,
+        p_full_name     IN  BIBLIOTECA.library_users.full_name%TYPE,
+        p_email         IN  BIBLIOTECA.library_users.email%TYPE,
+        p_phone         IN  BIBLIOTECA.library_users.phone%TYPE,
+        p_password_hash IN  BIBLIOTECA.library_users.password_hash%TYPE,
+        p_is_active     IN  BIBLIOTECA.library_users.is_active%TYPE,
+        p_role_id       IN  BIBLIOTECA.library_users.role_id%TYPE,
+        p_id            OUT BIBLIOTECA.library_users.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id            IN BIBLIOTECA.library_users.id%TYPE,
+        p_username      IN BIBLIOTECA.library_users.username%TYPE,
+        p_full_name     IN BIBLIOTECA.library_users.full_name%TYPE,
+        p_email         IN BIBLIOTECA.library_users.email%TYPE,
+        p_phone         IN BIBLIOTECA.library_users.phone%TYPE,
+        p_password_hash IN BIBLIOTECA.library_users.password_hash%TYPE,
+        p_is_active     IN BIBLIOTECA.library_users.is_active%TYPE,
+        p_role_id       IN BIBLIOTECA.library_users.role_id%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.library_users.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.library_users.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+END pkg_library_users;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_library_users AS
+
+    PROCEDURE p_insert(
+        p_username      IN  BIBLIOTECA.library_users.username%TYPE,
+        p_full_name     IN  BIBLIOTECA.library_users.full_name%TYPE,
+        p_email         IN  BIBLIOTECA.library_users.email%TYPE,
+        p_phone         IN  BIBLIOTECA.library_users.phone%TYPE,
+        p_password_hash IN  BIBLIOTECA.library_users.password_hash%TYPE,
+        p_is_active     IN  BIBLIOTECA.library_users.is_active%TYPE,
+        p_role_id       IN  BIBLIOTECA.library_users.role_id%TYPE,
+        p_id            OUT BIBLIOTECA.library_users.id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.library_users (
+            id, username, full_name, email, phone, password_hash, is_active, role_id
+        ) VALUES (
+            BIBLIOTECA.seq_library_users_id.NEXTVAL,
+            p_username, p_full_name, p_email, p_phone, p_password_hash, p_is_active, p_role_id
+        )
+        RETURNING id INTO p_id;
+    END p_insert;
+
+    PROCEDURE p_update(
+        p_id            IN BIBLIOTECA.library_users.id%TYPE,
+        p_username      IN BIBLIOTECA.library_users.username%TYPE,
+        p_full_name     IN BIBLIOTECA.library_users.full_name%TYPE,
+        p_email         IN BIBLIOTECA.library_users.email%TYPE,
+        p_phone         IN BIBLIOTECA.library_users.phone%TYPE,
+        p_password_hash IN BIBLIOTECA.library_users.password_hash%TYPE,
+        p_is_active     IN BIBLIOTECA.library_users.is_active%TYPE,
+        p_role_id       IN BIBLIOTECA.library_users.role_id%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.library_users
+        SET username      = p_username,
+            full_name     = p_full_name,
+            email         = p_email,
+            phone         = p_phone,
+            password_hash = p_password_hash,
+            is_active     = p_is_active,
+            role_id       = p_role_id
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.library_users.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.library_users WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.library_users.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, username, full_name, email, phone, password_hash,
+                   is_active, role_id, created_at, updated_at
+            FROM BIBLIOTECA.library_users
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, username, full_name, email, phone, password_hash,
+                   is_active, role_id, created_at, updated_at
+            FROM BIBLIOTECA.library_users
+            ORDER BY id;
+    END p_list;
+
+END pkg_library_users;
+/
+
+-- -----------------------------------------------------------------------------
+-- pkg_categories
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_categories AS
+    PROCEDURE p_insert(
+        p_name        IN  BIBLIOTECA.categories.name%TYPE,
+        p_description IN  BIBLIOTECA.categories.description%TYPE,
+        p_is_active   IN  BIBLIOTECA.categories.is_active%TYPE,
+        p_id          OUT BIBLIOTECA.categories.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.categories.id%TYPE,
+        p_name        IN BIBLIOTECA.categories.name%TYPE,
+        p_description IN BIBLIOTECA.categories.description%TYPE,
+        p_is_active   IN BIBLIOTECA.categories.is_active%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.categories.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.categories.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+END pkg_categories;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_categories AS
+
+    PROCEDURE p_insert(
+        p_name        IN  BIBLIOTECA.categories.name%TYPE,
+        p_description IN  BIBLIOTECA.categories.description%TYPE,
+        p_is_active   IN  BIBLIOTECA.categories.is_active%TYPE,
+        p_id          OUT BIBLIOTECA.categories.id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.categories (id, name, description, is_active)
+        VALUES (BIBLIOTECA.seq_categories_id.NEXTVAL, p_name, p_description, p_is_active)
+        RETURNING id INTO p_id;
+    END p_insert;
+
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.categories.id%TYPE,
+        p_name        IN BIBLIOTECA.categories.name%TYPE,
+        p_description IN BIBLIOTECA.categories.description%TYPE,
+        p_is_active   IN BIBLIOTECA.categories.is_active%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.categories
+        SET name        = p_name,
+            description = p_description,
+            is_active   = p_is_active
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.categories.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.categories WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.categories.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, name, description, is_active, created_at, updated_at
+            FROM BIBLIOTECA.categories
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, name, description, is_active, created_at, updated_at
+            FROM BIBLIOTECA.categories
+            ORDER BY id;
+    END p_list;
+
+END pkg_categories;
+/
+
+-- -----------------------------------------------------------------------------
+-- pkg_authors
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_authors AS
+    PROCEDURE p_insert(
+        p_first_name  IN  BIBLIOTECA.authors.first_name%TYPE,
+        p_last_name   IN  BIBLIOTECA.authors.last_name%TYPE,
+        p_biography   IN  BIBLIOTECA.authors.biography%TYPE,
+        p_birth_date  IN  BIBLIOTECA.authors.birth_date%TYPE,
+        p_death_date  IN  BIBLIOTECA.authors.death_date%TYPE,
+        p_is_active   IN  BIBLIOTECA.authors.is_active%TYPE,
+        p_id          OUT BIBLIOTECA.authors.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.authors.id%TYPE,
+        p_first_name  IN BIBLIOTECA.authors.first_name%TYPE,
+        p_last_name   IN BIBLIOTECA.authors.last_name%TYPE,
+        p_biography   IN BIBLIOTECA.authors.biography%TYPE,
+        p_birth_date  IN BIBLIOTECA.authors.birth_date%TYPE,
+        p_death_date  IN BIBLIOTECA.authors.death_date%TYPE,
+        p_is_active   IN BIBLIOTECA.authors.is_active%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.authors.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.authors.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+END pkg_authors;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_authors AS
+
+    PROCEDURE p_insert(
+        p_first_name  IN  BIBLIOTECA.authors.first_name%TYPE,
+        p_last_name   IN  BIBLIOTECA.authors.last_name%TYPE,
+        p_biography   IN  BIBLIOTECA.authors.biography%TYPE,
+        p_birth_date  IN  BIBLIOTECA.authors.birth_date%TYPE,
+        p_death_date  IN  BIBLIOTECA.authors.death_date%TYPE,
+        p_is_active   IN  BIBLIOTECA.authors.is_active%TYPE,
+        p_id          OUT BIBLIOTECA.authors.id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.authors (
+            id, first_name, last_name, biography, birth_date, death_date, is_active
+        ) VALUES (
+            BIBLIOTECA.seq_authors_id.NEXTVAL,
+            p_first_name, p_last_name, p_biography, p_birth_date, p_death_date, p_is_active
+        )
+        RETURNING id INTO p_id;
+    END p_insert;
+
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.authors.id%TYPE,
+        p_first_name  IN BIBLIOTECA.authors.first_name%TYPE,
+        p_last_name   IN BIBLIOTECA.authors.last_name%TYPE,
+        p_biography   IN BIBLIOTECA.authors.biography%TYPE,
+        p_birth_date  IN BIBLIOTECA.authors.birth_date%TYPE,
+        p_death_date  IN BIBLIOTECA.authors.death_date%TYPE,
+        p_is_active   IN BIBLIOTECA.authors.is_active%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.authors
+        SET first_name  = p_first_name,
+            last_name   = p_last_name,
+            biography   = p_biography,
+            birth_date  = p_birth_date,
+            death_date  = p_death_date,
+            is_active   = p_is_active
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.authors.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.authors WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.authors.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, first_name, last_name, biography, birth_date, death_date,
+                   is_active, created_at, updated_at
+            FROM BIBLIOTECA.authors
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, first_name, last_name, biography, birth_date, death_date,
+                   is_active, created_at, updated_at
+            FROM BIBLIOTECA.authors
+            ORDER BY id;
+    END p_list;
+
+END pkg_authors;
+/
+
+-- -----------------------------------------------------------------------------
+-- pkg_books
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_books AS
+    PROCEDURE p_insert(
+        p_title           IN  BIBLIOTECA.books.title%TYPE,
+        p_isbn            IN  BIBLIOTECA.books.isbn%TYPE,
+        p_description     IN  BIBLIOTECA.books.description%TYPE,
+        p_publication_date IN BIBLIOTECA.books.publication_date%TYPE,
+        p_publisher       IN  BIBLIOTECA.books.publisher%TYPE,
+        p_edition         IN  BIBLIOTECA.books.edition%TYPE,
+        p_pages           IN  BIBLIOTECA.books.pages%TYPE,
+        p_stock_total     IN  BIBLIOTECA.books.stock_total%TYPE,
+        p_stock_available IN  BIBLIOTECA.books.stock_available%TYPE,
+        p_is_active       IN  BIBLIOTECA.books.is_active%TYPE,
+        p_category_id     IN  BIBLIOTECA.books.category_id%TYPE,
+        p_id              OUT BIBLIOTECA.books.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id              IN BIBLIOTECA.books.id%TYPE,
+        p_title           IN BIBLIOTECA.books.title%TYPE,
+        p_isbn            IN BIBLIOTECA.books.isbn%TYPE,
+        p_description     IN BIBLIOTECA.books.description%TYPE,
+        p_publication_date IN BIBLIOTECA.books.publication_date%TYPE,
+        p_publisher       IN BIBLIOTECA.books.publisher%TYPE,
+        p_edition         IN BIBLIOTECA.books.edition%TYPE,
+        p_pages           IN BIBLIOTECA.books.pages%TYPE,
+        p_stock_total     IN BIBLIOTECA.books.stock_total%TYPE,
+        p_stock_available IN BIBLIOTECA.books.stock_available%TYPE,
+        p_is_active       IN BIBLIOTECA.books.is_active%TYPE,
+        p_category_id     IN BIBLIOTECA.books.category_id%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.books.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.books.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_add_author(
+        p_book_id   IN BIBLIOTECA.book_authors.book_id%TYPE,
+        p_author_id IN BIBLIOTECA.book_authors.author_id%TYPE
+    );
+    PROCEDURE p_remove_author(
+        p_book_id   IN BIBLIOTECA.book_authors.book_id%TYPE,
+        p_author_id IN BIBLIOTECA.book_authors.author_id%TYPE
+    );
+    PROCEDURE p_clear_authors(
+        p_book_id IN BIBLIOTECA.book_authors.book_id%TYPE
+    );
+    PROCEDURE p_set_authors(
+        p_book_id    IN BIBLIOTECA.book_authors.book_id%TYPE,
+        p_author_ids IN SYS.ODCINUMBERLIST
+    );
+END pkg_books;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_books AS
+
+    PROCEDURE p_insert(
+        p_title           IN  BIBLIOTECA.books.title%TYPE,
+        p_isbn            IN  BIBLIOTECA.books.isbn%TYPE,
+        p_description     IN  BIBLIOTECA.books.description%TYPE,
+        p_publication_date IN BIBLIOTECA.books.publication_date%TYPE,
+        p_publisher       IN  BIBLIOTECA.books.publisher%TYPE,
+        p_edition         IN  BIBLIOTECA.books.edition%TYPE,
+        p_pages           IN  BIBLIOTECA.books.pages%TYPE,
+        p_stock_total     IN  BIBLIOTECA.books.stock_total%TYPE,
+        p_stock_available IN  BIBLIOTECA.books.stock_available%TYPE,
+        p_is_active       IN  BIBLIOTECA.books.is_active%TYPE,
+        p_category_id     IN  BIBLIOTECA.books.category_id%TYPE,
+        p_id              OUT BIBLIOTECA.books.id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.books (
+            id, title, isbn, description, publication_date, publisher,
+            edition, pages, stock_total, stock_available, is_active, category_id
+        ) VALUES (
+            BIBLIOTECA.seq_books_id.NEXTVAL,
+            p_title, p_isbn, p_description, p_publication_date, p_publisher,
+            p_edition, p_pages, p_stock_total, p_stock_available, p_is_active, p_category_id
+        )
+        RETURNING id INTO p_id;
+    END p_insert;
+
+    PROCEDURE p_update(
+        p_id              IN BIBLIOTECA.books.id%TYPE,
+        p_title           IN BIBLIOTECA.books.title%TYPE,
+        p_isbn            IN BIBLIOTECA.books.isbn%TYPE,
+        p_description     IN BIBLIOTECA.books.description%TYPE,
+        p_publication_date IN BIBLIOTECA.books.publication_date%TYPE,
+        p_publisher       IN BIBLIOTECA.books.publisher%TYPE,
+        p_edition         IN BIBLIOTECA.books.edition%TYPE,
+        p_pages           IN BIBLIOTECA.books.pages%TYPE,
+        p_stock_total     IN BIBLIOTECA.books.stock_total%TYPE,
+        p_stock_available IN BIBLIOTECA.books.stock_available%TYPE,
+        p_is_active       IN BIBLIOTECA.books.is_active%TYPE,
+        p_category_id     IN BIBLIOTECA.books.category_id%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.books
+        SET title            = p_title,
+            isbn             = p_isbn,
+            description      = p_description,
+            publication_date = p_publication_date,
+            publisher        = p_publisher,
+            edition          = p_edition,
+            pages            = p_pages,
+            stock_total      = p_stock_total,
+            stock_available  = p_stock_available,
+            is_active        = p_is_active,
+            category_id      = p_category_id
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.books.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.books WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.books.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, title, isbn, description, publication_date, publisher,
+                   edition, pages, stock_total, stock_available, is_active,
+                   category_id, created_at, updated_at
+            FROM BIBLIOTECA.books
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, title, isbn, description, publication_date, publisher,
+                   edition, pages, stock_total, stock_available, is_active,
+                   category_id, created_at, updated_at
+            FROM BIBLIOTECA.books
+            ORDER BY id;
+    END p_list;
+
+    PROCEDURE p_add_author(
+        p_book_id   IN BIBLIOTECA.book_authors.book_id%TYPE,
+        p_author_id IN BIBLIOTECA.book_authors.author_id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.book_authors (book_id, author_id)
+        VALUES (p_book_id, p_author_id);
+    EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+            NULL; -- ignore duplicate (ORA-00001)
+    END p_add_author;
+
+    PROCEDURE p_remove_author(
+        p_book_id   IN BIBLIOTECA.book_authors.book_id%TYPE,
+        p_author_id IN BIBLIOTECA.book_authors.author_id%TYPE
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.book_authors
+        WHERE book_id = p_book_id AND author_id = p_author_id;
+    END p_remove_author;
+
+    PROCEDURE p_clear_authors(
+        p_book_id IN BIBLIOTECA.book_authors.book_id%TYPE
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.book_authors WHERE book_id = p_book_id;
+    END p_clear_authors;
+
+    PROCEDURE p_set_authors(
+        p_book_id    IN BIBLIOTECA.book_authors.book_id%TYPE,
+        p_author_ids IN SYS.ODCINUMBERLIST
+    ) IS
+    BEGIN
+        p_clear_authors(p_book_id);
+        IF p_author_ids IS NOT NULL THEN
+            FOR i IN 1 .. p_author_ids.COUNT LOOP
+                p_add_author(p_book_id, p_author_ids(i));
+            END LOOP;
+        END IF;
+    END p_set_authors;
+
+END pkg_books;
+/
+
+-- -----------------------------------------------------------------------------
+-- pkg_loans
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_loans AS
+    PROCEDURE p_insert(
+        p_user_id   IN  BIBLIOTECA.loans.user_id%TYPE,
+        p_book_id   IN  BIBLIOTECA.loans.book_id%TYPE,
+        p_loan_date IN  BIBLIOTECA.loans.loan_date%TYPE,
+        p_due_date  IN  BIBLIOTECA.loans.due_date%TYPE,
+        p_id        OUT BIBLIOTECA.loans.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.loans.id%TYPE,
+        p_user_id     IN BIBLIOTECA.loans.user_id%TYPE,
+        p_book_id     IN BIBLIOTECA.loans.book_id%TYPE,
+        p_loan_date   IN BIBLIOTECA.loans.loan_date%TYPE,
+        p_due_date    IN BIBLIOTECA.loans.due_date%TYPE,
+        p_return_date IN BIBLIOTECA.loans.return_date%TYPE,
+        p_status      IN BIBLIOTECA.loans.status%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.loans.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.loans.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_cancel(
+        p_id        IN  BIBLIOTECA.loans.id%TYPE,
+        p_cancelled OUT NUMBER
+    );
+END pkg_loans;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_loans AS
+
+    PROCEDURE p_insert(
+        p_user_id   IN  BIBLIOTECA.loans.user_id%TYPE,
+        p_book_id   IN  BIBLIOTECA.loans.book_id%TYPE,
+        p_loan_date IN  BIBLIOTECA.loans.loan_date%TYPE,
+        p_due_date  IN  BIBLIOTECA.loans.due_date%TYPE,
+        p_id        OUT BIBLIOTECA.loans.id%TYPE
+    ) IS
+    BEGIN
+        INSERT INTO BIBLIOTECA.loans (id, user_id, book_id, loan_date, due_date, status)
+        VALUES (
+            BIBLIOTECA.seq_loans_id.NEXTVAL,
+            p_user_id, p_book_id, p_loan_date, p_due_date, 'ACTIVE'
+        )
+        RETURNING id INTO p_id;
+    END p_insert;
+
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.loans.id%TYPE,
+        p_user_id     IN BIBLIOTECA.loans.user_id%TYPE,
+        p_book_id     IN BIBLIOTECA.loans.book_id%TYPE,
+        p_loan_date   IN BIBLIOTECA.loans.loan_date%TYPE,
+        p_due_date    IN BIBLIOTECA.loans.due_date%TYPE,
+        p_return_date IN BIBLIOTECA.loans.return_date%TYPE,
+        p_status      IN BIBLIOTECA.loans.status%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.loans
+        SET user_id     = p_user_id,
+            book_id     = p_book_id,
+            loan_date   = p_loan_date,
+            due_date    = p_due_date,
+            return_date = p_return_date,
+            status      = p_status
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.loans.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.loans WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.loans.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, user_id, book_id, loan_date, due_date, return_date,
+                   status, created_at, updated_at
+            FROM BIBLIOTECA.loans
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, user_id, book_id, loan_date, due_date, return_date,
+                   status, created_at, updated_at
+            FROM BIBLIOTECA.loans
+            ORDER BY id;
+    END p_list;
+
+    PROCEDURE p_cancel(
+        p_id        IN  BIBLIOTECA.loans.id%TYPE,
+        p_cancelled OUT NUMBER
+    ) IS
+        v_status BIBLIOTECA.loans.status%TYPE;
+    BEGIN
+        SELECT status INTO v_status
+        FROM BIBLIOTECA.loans
+        WHERE id = p_id;
+
+        IF v_status IN ('RETURNED', 'CANCELLED') THEN
+            RAISE_APPLICATION_ERROR(
+                -20002,
+                'Cannot cancel loan ' || p_id || ': current status is ' || v_status || '.'
+            );
+        END IF;
+
+        UPDATE BIBLIOTECA.loans
+        SET status = 'CANCELLED'
+        WHERE id = p_id;
+
+        p_cancelled := 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            p_cancelled := 0;
+    END p_cancel;
+
+END pkg_loans;
+/
+
+-- -----------------------------------------------------------------------------
+-- pkg_returns
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BIBLIOTECA.pkg_returns AS
+    PROCEDURE p_process(
+        p_loan_id     IN  BIBLIOTECA.returns.loan_id%TYPE,
+        p_return_date IN  BIBLIOTECA.returns.return_date%TYPE,
+        p_fine_amount IN  BIBLIOTECA.returns.fine_amount%TYPE,
+        p_notes       IN  BIBLIOTECA.returns.notes%TYPE,
+        p_id          OUT BIBLIOTECA.returns.id%TYPE
+    );
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.returns.id%TYPE,
+        p_loan_id     IN BIBLIOTECA.returns.loan_id%TYPE,
+        p_return_date IN BIBLIOTECA.returns.return_date%TYPE,
+        p_fine_amount IN BIBLIOTECA.returns.fine_amount%TYPE,
+        p_notes       IN BIBLIOTECA.returns.notes%TYPE
+    );
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.returns.id%TYPE,
+        p_deleted OUT NUMBER
+    );
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.returns.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    );
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    );
+END pkg_returns;
+/
+
+CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_returns AS
+
+    PROCEDURE p_process(
+        p_loan_id     IN  BIBLIOTECA.returns.loan_id%TYPE,
+        p_return_date IN  BIBLIOTECA.returns.return_date%TYPE,
+        p_fine_amount IN  BIBLIOTECA.returns.fine_amount%TYPE,
+        p_notes       IN  BIBLIOTECA.returns.notes%TYPE,
+        p_id          OUT BIBLIOTECA.returns.id%TYPE
+    ) IS
+    BEGIN
+        -- INSERT only; trg_returns_restore_stock owns loan status + stock side effects.
+        INSERT INTO BIBLIOTECA.returns (id, loan_id, return_date, fine_amount, notes)
+        VALUES (
+            BIBLIOTECA.seq_returns_id.NEXTVAL,
+            p_loan_id, p_return_date, p_fine_amount, p_notes
+        )
+        RETURNING id INTO p_id;
+    END p_process;
+
+    PROCEDURE p_update(
+        p_id          IN BIBLIOTECA.returns.id%TYPE,
+        p_loan_id     IN BIBLIOTECA.returns.loan_id%TYPE,
+        p_return_date IN BIBLIOTECA.returns.return_date%TYPE,
+        p_fine_amount IN BIBLIOTECA.returns.fine_amount%TYPE,
+        p_notes       IN BIBLIOTECA.returns.notes%TYPE
+    ) IS
+    BEGIN
+        UPDATE BIBLIOTECA.returns
+        SET loan_id     = p_loan_id,
+            return_date = p_return_date,
+            fine_amount = p_fine_amount,
+            notes       = p_notes
+        WHERE id = p_id;
+    END p_update;
+
+    PROCEDURE p_delete(
+        p_id      IN  BIBLIOTECA.returns.id%TYPE,
+        p_deleted OUT NUMBER
+    ) IS
+    BEGIN
+        DELETE FROM BIBLIOTECA.returns WHERE id = p_id;
+        IF SQL%ROWCOUNT > 0 THEN
+            p_deleted := 1;
+        ELSE
+            p_deleted := 0;
+        END IF;
+    END p_delete;
+
+    PROCEDURE p_sel_by_id(
+        p_id     IN  BIBLIOTECA.returns.id%TYPE,
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, loan_id, return_date, fine_amount, notes, created_at, updated_at
+            FROM BIBLIOTECA.returns
+            WHERE id = p_id;
+    END p_sel_by_id;
+
+    PROCEDURE p_list(
+        p_cursor OUT SYS_REFCURSOR
+    ) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT id, loan_id, return_date, fine_amount, notes, created_at, updated_at
+            FROM BIBLIOTECA.returns
+            ORDER BY id;
+    END p_list;
+
+END pkg_returns;
+/
+
 PROMPT BIBLIOTECA Oracle schema is ready in XEPDB1.
 EXIT
