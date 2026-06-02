@@ -45,3 +45,7 @@ class LoanRepository(Protocol):
     def has_overdue_loans(self, session: Any, user_id: int) -> bool:
         """Return whether the user has active overdue loans."""
         ...
+
+    def cancel(self, session: Any, loan_id: int) -> bool:
+        """Cancel the loan with *loan_id*. Return True if cancelled, False if not found or already terminal."""
+        ...

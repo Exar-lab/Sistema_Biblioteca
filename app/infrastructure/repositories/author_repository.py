@@ -1,72 +1,73 @@
-"""SQLAlchemy adapter for author persistence."""
+"""OracleAuthorRepository — writes via pkg_authors stored procedures, reads via ORM."""
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from typing import Any
+
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.application.errors import ConflictError
 from app.domain.models.author import Author
-from app.schemas.catalog.authors import AuthorCreate, AuthorUpdate
+from app.application.ports.author_repository import AuthorRepository as AuthorRepositoryPort
 
 
-class SqlAlchemyAuthorRepository:
-    """Persist authors using SQLAlchemy ORM models."""
+class AuthorRepository:
+    """Concrete implementation of AuthorRepositoryPort backed by Oracle.
+
+    Writes delegate exclusively to BIBLIOTECA.pkg_authors stored procedures.
+    Reads use SQLAlchemy ORM SELECT. No session.commit() or session.rollback().
+    """
 
     def get_by_id(self, session: Session, id: int) -> Author | None:
-        """Return the author with *id*, or None if it does not exist."""
-
-        return session.get(Author, id)
+        """Return the Author with *id*, or None."""
+        return session.execute(select(Author).where(Author.id == id)).scalar_one_or_none()
 
     def list_all(self, session: Session) -> list[Author]:
-        """Return authors ordered by last and first name for stable API responses."""
+        """Return all authors."""
+        return list(session.execute(select(Author)).scalars().all())
 
-        return list(session.scalars(select(Author).order_by(Author.last_name, Author.first_name)).all())
+    def create(self, session: Session, data: Any) -> Author:
+        """Insert an author via pkg_authors.p_insert (OUT param) and return the new instance."""
+        with session.connection().connection.cursor() as cur:
+            out_id = cur.var(int)
+            cur.callproc(
+                "BIBLIOTECA.pkg_authors.p_insert",
+                [
+                    data.first_name,
+                    data.last_name,
+                    data.biography,
+                    data.birth_date,
+                    data.death_date,
+                    data.is_active,
+                    out_id,
+                ],
+            )
+            new_id = out_id.getvalue()
+        session.expire_all()
+        return self.get_by_id(session, new_id)
 
-    def create(self, session: Session, data: AuthorCreate) -> Author:
-        """Persist a new author and return the created instance."""
-
-        author = Author(**data.model_dump())
-        session.add(author)
-        return self._flush_and_refresh(session, author)
-
-    def update(self, session: Session, id: int, data: AuthorUpdate) -> Author | None:
-        """Update the author with *id* and return it, or None if missing."""
-
-        author = self.get_by_id(session, id)
-        if author is None:
-            return None
-
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(author, field, value)
-
-        return self._flush_and_refresh(session, author)
+    def update(self, session: Session, id: int, data: Any) -> Author:
+        """Update an author via pkg_authors.p_update and return the refreshed instance."""
+        session.execute(
+            text(
+                "BEGIN BIBLIOTECA.pkg_authors.p_update("
+                ":p_id, :p_first_name, :p_last_name, :p_biography,"
+                " :p_birth_date, :p_death_date, :p_is_active); END;"
+            ),
+            {
+                "p_id": id,
+                "p_first_name": data.first_name,
+                "p_last_name": data.last_name,
+                "p_biography": data.biography,
+                "p_birth_date": data.birth_date,
+                "p_death_date": data.death_date,
+                "p_is_active": data.is_active,
+            },
+        )
+        session.expire_all()
+        return self.get_by_id(session, id)
 
     def delete(self, session: Session, id: int) -> bool:
-        """Delete the author with *id*. Return True if deleted."""
-
-        author = self.get_by_id(session, id)
-        if author is None:
-            return False
-
-        session.delete(author)
-        try:
-            session.flush()
-        except IntegrityError as exc:
-            raise ConflictError("Author cannot be deleted because it is in use.") from exc
-        return True
-
-    def _flush_and_refresh(self, session: Session, author: Author) -> Author:
-        """Flush changes and translate database constraint failures to domain conflicts."""
-
-        try:
-            session.flush()
-            session.refresh(author)
-        except IntegrityError as exc:
-            raise ConflictError("Author violates database constraints.") from exc
-        return author
-
-
-author_repository = SqlAlchemyAuthorRepository()
-
-
-__all__ = ["SqlAlchemyAuthorRepository", "author_repository"]
+        """Delete an author via pkg_authors.p_delete. Returns True if a row was removed."""
+        with session.connection().connection.cursor() as cur:
+            out_deleted = cur.var(int)
+            cur.callproc("BIBLIOTECA.pkg_authors.p_delete", [id, out_deleted])
+            return bool(out_deleted.getvalue() == 1)
