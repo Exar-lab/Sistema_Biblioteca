@@ -6,6 +6,7 @@
 --   * Must be executed inside a CDB, targeting the XEPDB1 PDB.
 --   * Recommended invocation (from host shell):
 --       sqlplus / as sysdba @database/oracle_schema.sql
+--     SQL*Plus prompts once for biblioteca_password and reuses it.
 -- =============================================================================
 
 SET DEFINE ON
@@ -22,12 +23,12 @@ BEGIN
     FROM dba_users
     WHERE username = 'BIBLIOTECA';
 
-    -- Replace &biblioteca_password with your chosen password before executing.
+    -- SQL*Plus prompts for &&biblioteca_password once and defines it for reuse.
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE USER BIBLIOTECA IDENTIFIED BY "&biblioteca_password" DEFAULT TABLESPACE USERS TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON USERS';
+        EXECUTE IMMEDIATE 'CREATE USER BIBLIOTECA IDENTIFIED BY "&&biblioteca_password" DEFAULT TABLESPACE USERS TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON USERS';
         DBMS_OUTPUT.PUT_LINE('Created user BIBLIOTECA.');
     ELSE
-        EXECUTE IMMEDIATE 'ALTER USER BIBLIOTECA IDENTIFIED BY "&biblioteca_password" ACCOUNT UNLOCK';
+        EXECUTE IMMEDIATE 'ALTER USER BIBLIOTECA IDENTIFIED BY "&&biblioteca_password" ACCOUNT UNLOCK';
         EXECUTE IMMEDIATE 'ALTER USER BIBLIOTECA QUOTA UNLIMITED ON USERS';
         DBMS_OUTPUT.PUT_LINE('Updated existing user BIBLIOTECA.');
     END IF;
