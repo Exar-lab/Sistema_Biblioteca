@@ -87,8 +87,13 @@ def test_create_calls_p_process_and_returns_id(
     assert "pkg_returns.p_process" in proc_name
 
     bind_args = mock_cursor.callproc.call_args[0][1]
-    assert fake_create_data.loan_id in bind_args
-    assert fake_create_data.return_date in bind_args
+    assert bind_args == [
+        fake_create_data.loan_id,
+        fake_create_data.return_date,
+        fake_create_data.fine_amount,
+        fake_create_data.notes,
+        mock_cursor.var.return_value,
+    ]
 
     assert result.id == 30
 

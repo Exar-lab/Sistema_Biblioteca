@@ -1,6 +1,6 @@
 """Unit tests for RoleRepository — no live Oracle required."""
 
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy.orm import Session
@@ -105,8 +105,11 @@ def test_create_binds_correct_params(
     repo.create(mock_session, fake_create_data)
 
     bind_args = mock_cursor.callproc.call_args[0][1]
-    assert fake_create_data.name in bind_args
-    assert fake_create_data.description in bind_args
+    assert bind_args == [
+        fake_create_data.name,
+        fake_create_data.description,
+        mock_cursor.var.return_value,
+    ]
 
 
 def test_create_no_commit(

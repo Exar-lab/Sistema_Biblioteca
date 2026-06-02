@@ -3,9 +3,9 @@
 REQUIREMENTS
 ------------
 These tests require a live Oracle XE instance with the PR 1 schema applied.
-Set the ``ORACLE_DSN`` environment variable before running:
+Set the ``ORACLE_DSN`` environment variable to a full SQLAlchemy URL before running:
 
-    export ORACLE_DSN="BIBLIOTECA/<password>@localhost:1521/FREEPDB1"
+    export ORACLE_DSN="oracle+oracledb://BIBLIOTECA:<password>@localhost:1521/?service_name=XEPDB1"
 
 All tests in this module are **automatically skipped** when ``ORACLE_DSN`` is
 not set, so the CI pipeline passes without Oracle.
@@ -13,9 +13,9 @@ not set, so the CI pipeline passes without Oracle.
 SCHEMA PRE-CONDITION
 --------------------
 PR 1 (``database/oracle_schema.sql``) must have been executed against the
-target Oracle instance:
+target Oracle instance as SYS/DBA:
 
-    sqlplus BIBLIOTECA/<pwd>@<dsn> @database/oracle_schema.sql
+    sqlplus / as sysdba @database/oracle_schema.sql
 
 Verify all packages are VALID before running:
 
@@ -28,10 +28,10 @@ from __future__ import annotations
 
 import datetime
 import os
-from decimal import Decimal
+from typing import cast
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.infrastructure.repositories.role_repository import RoleRepository
@@ -59,8 +59,8 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(scope="module")
 def db_session():
     """Create a SQLAlchemy Session connected to the Oracle instance defined by ORACLE_DSN."""
-    dsn = os.getenv("ORACLE_DSN", "")
-    engine = create_engine(f"oracle+oracledb://{dsn}", echo=False)
+    database_url = os.getenv("ORACLE_DSN", "")
+    engine = create_engine(database_url, echo=False)
     Session = sessionmaker(bind=engine)
     session = Session()
     yield session
@@ -92,15 +92,16 @@ class TestRoleRepositoryIntegration:
         repo = RoleRepository()
         created = repo.create(db_session, data)
         assert created.id is not None
+        created_id = cast(int, created.id)
 
-        fetched = repo.get_by_id(db_session, created.id)
+        fetched = repo.get_by_id(db_session, created_id)
         assert fetched is not None
         assert fetched.name == data.name
 
-        deleted = repo.delete(db_session, created.id)
+        deleted = repo.delete(db_session, created_id)
         assert deleted is True
 
-        gone = repo.get_by_id(db_session, created.id)
+        gone = repo.get_by_id(db_session, created_id)
         assert gone is None
 
     def test_delete_returns_false_for_missing_id(self, db_session) -> None:
@@ -130,11 +131,12 @@ class TestCategoryRepositoryIntegration:
         repo = CategoryRepository()
         created = repo.create(db_session, data)
         assert created.id is not None
+        created_id = cast(int, created.id)
 
-        fetched = repo.get_by_id(db_session, created.id)
+        fetched = repo.get_by_id(db_session, created_id)
         assert fetched is not None
 
-        deleted = repo.delete(db_session, created.id)
+        deleted = repo.delete(db_session, created_id)
         assert deleted is True
 
 
@@ -163,8 +165,9 @@ class TestAuthorRepositoryIntegration:
         repo = AuthorRepository()
         created = repo.create(db_session, data)
         assert created.id is not None
+        created_id = cast(int, created.id)
 
-        deleted = repo.delete(db_session, created.id)
+        deleted = repo.delete(db_session, created_id)
         assert deleted is True
 
 

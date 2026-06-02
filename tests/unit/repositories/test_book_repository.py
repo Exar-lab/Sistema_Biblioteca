@@ -1,7 +1,7 @@
 """Unit tests for BookRepository — no live Oracle required."""
 
 import datetime
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy.orm import Session
@@ -130,9 +130,20 @@ def test_create_binds_correct_params(
     repo.create(mock_session, fake_create_data)
 
     bind_args = mock_cursor.callproc.call_args[0][1]
-    assert fake_create_data.title in bind_args
-    assert fake_create_data.isbn in bind_args
-    assert fake_create_data.category_id in bind_args
+    assert bind_args == [
+        fake_create_data.title,
+        fake_create_data.isbn,
+        fake_create_data.description,
+        fake_create_data.publication_date,
+        fake_create_data.publisher,
+        fake_create_data.edition,
+        fake_create_data.pages,
+        fake_create_data.stock_total,
+        fake_create_data.stock_available,
+        fake_create_data.is_active,
+        fake_create_data.category_id,
+        mock_cursor.var.return_value,
+    ]
 
 
 def test_create_no_commit(

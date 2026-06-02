@@ -109,8 +109,13 @@ def test_create_binds_correct_params(
     repo.create(mock_session, fake_create_data)
 
     bind_args = mock_cursor.callproc.call_args[0][1]
-    assert fake_create_data.user_id in bind_args
-    assert fake_create_data.book_id in bind_args
+    assert bind_args == [
+        fake_create_data.user_id,
+        fake_create_data.book_id,
+        fake_create_data.loan_date,
+        fake_create_data.due_date,
+        mock_cursor.var.return_value,
+    ]
 
 
 def test_create_no_commit(
