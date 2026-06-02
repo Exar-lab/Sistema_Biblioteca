@@ -180,23 +180,21 @@ python -m pip install -r requirements.txt
 
 3. Aplicar el esquema Oracle (tablas, triggers, secuencias y packages PL/SQL):
 
-> **Prerequisitos**: Oracle XE corriendo localmente con el PDB `XEPDB1` activo. El script debe ejecutarse como `SYS` (o un usuario con privilegios DBA).
+> **Prerrequisitos**: Oracle XE corriendo localmente con el PDB `XEPDB1` activo. El script debe ejecutarse como `SYS` (o un usuario con privilegios DBA).
 
-Reemplazá `<tu_password>` con la contraseña que querés asignar al usuario `BIBLIOTECA`, luego ejecutá:
+Ejecutá el script desde SQL*Plus. Cuando SQL*Plus solicite `biblioteca_password`, ingresá la contraseña que querés asignar al usuario `BIBLIOTECA`:
 
 ```powershell
 # PowerShell
-$env:biblioteca_password = "<tu_password>"
 sqlplus / as sysdba "@database/oracle_schema.sql"
 ```
 
 ```bash
 # Bash / Git Bash
-export biblioteca_password="<tu_password>"
 sqlplus / as sysdba @database/oracle_schema.sql
 ```
 
-El script es **idempotente**: podés ejecutarlo varias veces sin romper datos existentes. Al finalizar debería mostrar `PL/SQL procedure successfully completed` para cada objeto y los packages deben compilar sin errores.
+El script es **idempotente**: podés ejecutarlo varias veces sin romper datos existentes. Las secuencias se crean con verificaciones contra `ALL_SEQUENCES`. Al finalizar debería mostrar `PL/SQL procedure successfully completed` para cada objeto y los packages deben compilar sin errores.
 
 Para verificar que los packages quedaron válidos después de aplicar el schema:
 
