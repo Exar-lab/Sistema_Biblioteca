@@ -336,7 +336,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_ROLES_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_roles_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.roles.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_roles_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_roles_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_roles_id already exists; skipped.');
@@ -349,7 +349,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_LIBRARY_USERS_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_library_users_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.library_users.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_library_users_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_library_users_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_library_users_id already exists; skipped.');
@@ -362,7 +362,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_CATEGORIES_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_categories_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.categories.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_categories_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_categories_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_categories_id already exists; skipped.');
@@ -375,7 +375,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_AUTHORS_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_authors_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.authors.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_authors_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_authors_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_authors_id already exists; skipped.');
@@ -388,7 +388,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_BOOKS_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_books_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.books.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_books_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_books_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_books_id already exists; skipped.');
@@ -401,7 +401,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_LOANS_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_loans_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.loans.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_loans_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_loans_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_loans_id already exists; skipped.');
@@ -414,7 +414,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_RETURNS_ID';
     IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_returns_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE OWNED BY BIBLIOTECA.returns.id';
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_returns_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
         DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_returns_id.');
     ELSE
         DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_returns_id already exists; skipped.');
@@ -463,8 +463,8 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_roles AS
         p_id          OUT BIBLIOTECA.roles.id%TYPE
     ) IS
     BEGIN
-        INSERT INTO BIBLIOTECA.roles (id, name, description)
-        VALUES (BIBLIOTECA.seq_roles_id.NEXTVAL, p_name, p_description)
+        INSERT INTO BIBLIOTECA.roles (name, description)
+        VALUES (p_name, p_description)
         RETURNING id INTO p_id;
     END p_insert;
 
@@ -570,9 +570,8 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_library_users AS
     ) IS
     BEGIN
         INSERT INTO BIBLIOTECA.library_users (
-            id, username, full_name, email, phone, password_hash, is_active, role_id
+            username, full_name, email, phone, password_hash, is_active, role_id
         ) VALUES (
-            BIBLIOTECA.seq_library_users_id.NEXTVAL,
             p_username, p_full_name, p_email, p_phone, p_password_hash, p_is_active, p_role_id
         )
         RETURNING id INTO p_id;
@@ -619,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_library_users AS
     ) IS
     BEGIN
         OPEN p_cursor FOR
-            SELECT id, username, full_name, email, phone, password_hash,
+            SELECT id, username, full_name, email, phone,
                    is_active, role_id, created_at, updated_at
             FROM BIBLIOTECA.library_users
             WHERE id = p_id;
@@ -630,7 +629,7 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_library_users AS
     ) IS
     BEGIN
         OPEN p_cursor FOR
-            SELECT id, username, full_name, email, phone, password_hash,
+            SELECT id, username, full_name, email, phone,
                    is_active, role_id, created_at, updated_at
             FROM BIBLIOTECA.library_users
             ORDER BY id;
@@ -679,8 +678,8 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_categories AS
         p_id          OUT BIBLIOTECA.categories.id%TYPE
     ) IS
     BEGIN
-        INSERT INTO BIBLIOTECA.categories (id, name, description, is_active)
-        VALUES (BIBLIOTECA.seq_categories_id.NEXTVAL, p_name, p_description, p_is_active)
+        INSERT INTO BIBLIOTECA.categories (name, description, is_active)
+        VALUES (p_name, p_description, p_is_active)
         RETURNING id INTO p_id;
     END p_insert;
 
@@ -785,9 +784,8 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_authors AS
     ) IS
     BEGIN
         INSERT INTO BIBLIOTECA.authors (
-            id, first_name, last_name, biography, birth_date, death_date, is_active
+            first_name, last_name, biography, birth_date, death_date, is_active
         ) VALUES (
-            BIBLIOTECA.seq_authors_id.NEXTVAL,
             p_first_name, p_last_name, p_biography, p_birth_date, p_death_date, p_is_active
         )
         RETURNING id INTO p_id;
@@ -932,10 +930,9 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_books AS
     ) IS
     BEGIN
         INSERT INTO BIBLIOTECA.books (
-            id, title, isbn, description, publication_date, publisher,
+            title, isbn, description, publication_date, publisher,
             edition, pages, stock_total, stock_available, is_active, category_id
         ) VALUES (
-            BIBLIOTECA.seq_books_id.NEXTVAL,
             p_title, p_isbn, p_description, p_publication_date, p_publisher,
             p_edition, p_pages, p_stock_total, p_stock_available, p_is_active, p_category_id
         )
@@ -1103,9 +1100,8 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_loans AS
         p_id        OUT BIBLIOTECA.loans.id%TYPE
     ) IS
     BEGIN
-        INSERT INTO BIBLIOTECA.loans (id, user_id, book_id, loan_date, due_date, status)
+        INSERT INTO BIBLIOTECA.loans (user_id, book_id, loan_date, due_date, status)
         VALUES (
-            BIBLIOTECA.seq_loans_id.NEXTVAL,
             p_user_id, p_book_id, p_loan_date, p_due_date, 'ACTIVE'
         )
         RETURNING id INTO p_id;
@@ -1171,11 +1167,14 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_loans AS
         p_id        IN  BIBLIOTECA.loans.id%TYPE,
         p_cancelled OUT NUMBER
     ) IS
-        v_status BIBLIOTECA.loans.status%TYPE;
+        v_book_id BIBLIOTECA.loans.book_id%TYPE;
+        v_status  BIBLIOTECA.loans.status%TYPE;
     BEGIN
-        SELECT status INTO v_status
+        SELECT book_id, status
+        INTO v_book_id, v_status
         FROM BIBLIOTECA.loans
-        WHERE id = p_id;
+        WHERE id = p_id
+        FOR UPDATE;
 
         IF v_status IN ('RETURNED', 'CANCELLED') THEN
             RAISE_APPLICATION_ERROR(
@@ -1187,6 +1186,13 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_loans AS
         UPDATE BIBLIOTECA.loans
         SET status = 'CANCELLED'
         WHERE id = p_id;
+
+        UPDATE BIBLIOTECA.books
+        SET stock_available = CASE
+            WHEN stock_available < stock_total THEN stock_available + 1
+            ELSE stock_available
+        END
+        WHERE id = v_book_id;
 
         p_cancelled := 1;
     EXCEPTION
@@ -1241,9 +1247,8 @@ CREATE OR REPLACE PACKAGE BODY BIBLIOTECA.pkg_returns AS
     ) IS
     BEGIN
         -- INSERT only; trg_returns_restore_stock owns loan status + stock side effects.
-        INSERT INTO BIBLIOTECA.returns (id, loan_id, return_date, fine_amount, notes)
+        INSERT INTO BIBLIOTECA.returns (loan_id, return_date, fine_amount, notes)
         VALUES (
-            BIBLIOTECA.seq_returns_id.NEXTVAL,
             p_loan_id, p_return_date, p_fine_amount, p_notes
         )
         RETURNING id INTO p_id;
