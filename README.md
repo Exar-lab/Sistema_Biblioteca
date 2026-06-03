@@ -178,7 +178,37 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-3. Configurar variables de entorno:
+3. Aplicar el esquema Oracle (tablas, triggers, secuencias y packages PL/SQL):
+
+> **Prerrequisitos**: Oracle XE corriendo localmente con el PDB `XEPDB1` activo. El script debe ejecutarse como `SYS` (o un usuario con privilegios DBA).
+
+Ejecutá el script desde SQL*Plus. Cuando SQL*Plus solicite `biblioteca_password`, ingresá la contraseña que querés asignar al usuario `BIBLIOTECA`:
+
+```powershell
+# PowerShell
+sqlplus / as sysdba "@database/oracle_schema.sql"
+```
+
+```bash
+# Bash / Git Bash
+sqlplus / as sysdba @database/oracle_schema.sql
+```
+
+El script es **idempotente**: podés ejecutarlo varias veces sin romper datos existentes. Las secuencias se crean con verificaciones contra `ALL_SEQUENCES`. Al finalizar debería mostrar `PL/SQL procedure successfully completed` para cada objeto y los packages deben compilar sin errores.
+
+Para verificar que los packages quedaron válidos después de aplicar el schema:
+
+```sql
+-- Conectate como BIBLIOTECA y ejecutá:
+SELECT object_name, object_type, status
+FROM user_objects
+WHERE object_type IN ('PACKAGE', 'PACKAGE BODY')
+ORDER BY object_name;
+```
+
+Todos los objetos deben aparecer con `STATUS = VALID`. Si alguno figura `INVALID`, revisá los errores con `SHOW ERRORS PACKAGE BODY <nombre>`.
+
+4. Configurar variables de entorno:
 
 ```powershell
 Copy-Item .env.example .env
@@ -192,14 +222,14 @@ Para generar una clave local:
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-4. Verificar sintaxis y ejecutar:
+5. Verificar sintaxis y ejecutar:
 
 ```powershell
 python -m compileall app main.py
 uvicorn main:app --reload
 ```
 
-5. Smoke check de salud:
+6. Smoke check de salud:
 
 ```powershell
 curl http://127.0.0.1:8000/health
