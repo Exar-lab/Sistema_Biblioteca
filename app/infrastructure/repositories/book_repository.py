@@ -1,121 +1,104 @@
-"""SQLAlchemy adapter for book persistence."""
+"""OracleBookRepository — writes via pkg_books stored procedures, reads via ORM."""
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from typing import Any
+
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session, selectinload
 
-from app.application.errors import ConflictError, NotFoundError
-from app.domain.models.author import Author
 from app.domain.models.book import Book
-from app.schemas.catalog.books import BookCreate, BookUpdate
+from app.application.ports.book_repository import BookRepository as BookRepositoryPort
 
 
-class SqlAlchemyBookRepository:
-    """Persist books and book-author relationships using SQLAlchemy ORM models."""
+class BookRepository:
+    """Concrete implementation of BookRepositoryPort backed by Oracle.
+
+    Writes delegate exclusively to BIBLIOTECA.pkg_books stored procedures.
+    Reads use SQLAlchemy ORM SELECT. No session.commit() or session.rollback().
+    """
 
     def get_by_id(self, session: Session, id: int) -> Book | None:
-        """Return the book with *id*, or None if it does not exist."""
-
-        return session.get(Book, id)
-
-    def get_with_authors(self, session: Session, id: int) -> Book | None:
-        """Return the book with authors and category loaded, or None."""
-
-        return session.scalar(self._with_relationships().where(Book.id == id))
+        """Return the Book with *id*, or None."""
+        return session.execute(select(Book).where(Book.id == id)).scalar_one_or_none()
 
     def list_all(self, session: Session) -> list[Book]:
-        """Return books ordered by title for stable API responses."""
+        """Return all books."""
+        return list(session.execute(select(Book)).scalars().all())
 
-        return list(session.scalars(self._with_relationships().order_by(Book.title)).all())
+    def get_with_authors(self, session: Session, id: int) -> Book | None:
+        """Return the Book with *id* with its authors eagerly loaded, or None."""
+        return session.execute(
+            select(Book).where(Book.id == id).options(selectinload(Book.authors))
+        ).scalar_one_or_none()
 
-    def create(self, session: Session, data: BookCreate) -> Book:
-        """Persist a new book and return the created instance."""
+    def create(self, session: Session, data: Any) -> Book:
+        """Insert a book via pkg_books.p_insert (OUT param) and return the new instance."""
+        with session.connection().connection.cursor() as cur:
+            out_id = cur.var(int)
+            cur.callproc(
+                "BIBLIOTECA.pkg_books.p_insert",
+                [
+                    data.title,
+                    data.isbn,
+                    data.description,
+                    data.publication_date,
+                    data.publisher,
+                    data.edition,
+                    data.pages,
+                    data.stock_total,
+                    data.stock_available,
+                    data.is_active,
+                    data.category_id,
+                    out_id,
+                ],
+            )
+            new_id = out_id.getvalue()
+        session.expire_all()
+        return self.get_by_id(session, new_id)
 
-        values = data.model_dump()
-        author_ids = values.pop("author_ids")
-        values["stock_available"] = values["stock_total"]
-        book = Book(**values)
-        session.add(book)
-        if author_ids:
-            self._set_author_models(session, book, author_ids)
-        return self._flush_refresh_and_load(session, book)
-
-    def update(self, session: Session, id: int, data: BookUpdate) -> Book | None:
-        """Update the book with *id* and return it, or None if missing."""
-
-        book = self.get_by_id(session, id)
-        if book is None:
-            return None
-
-        values = data.model_dump(exclude_unset=True)
-        author_ids = values.pop("author_ids", None)
-        new_stock_total = values.get("stock_total")
-        if new_stock_total is not None and book.stock_available > new_stock_total:
-            book.stock_available = new_stock_total
-        for field, value in values.items():
-            setattr(book, field, value)
-        if author_ids is not None:
-            self._set_author_models(session, book, author_ids)
-
-        return self._flush_refresh_and_load(session, book)
+    def update(self, session: Session, id: int, data: Any) -> Book:
+        """Update a book via pkg_books.p_update and return the refreshed instance."""
+        session.execute(
+            text(
+                "BEGIN BIBLIOTECA.pkg_books.p_update("
+                ":p_id, :p_title, :p_isbn, :p_description, :p_publication_date,"
+                " :p_publisher, :p_edition, :p_pages, :p_stock_total,"
+                " :p_stock_available, :p_is_active, :p_category_id); END;"
+            ),
+            {
+                "p_id": id,
+                "p_title": data.title,
+                "p_isbn": data.isbn,
+                "p_description": data.description,
+                "p_publication_date": data.publication_date,
+                "p_publisher": data.publisher,
+                "p_edition": data.edition,
+                "p_pages": data.pages,
+                "p_stock_total": data.stock_total,
+                "p_stock_available": data.stock_available,
+                "p_is_active": data.is_active,
+                "p_category_id": data.category_id,
+            },
+        )
+        session.expire_all()
+        return self.get_by_id(session, id)
 
     def delete(self, session: Session, id: int) -> bool:
-        """Delete the book with *id*. Return True if deleted."""
-
-        book = self.get_by_id(session, id)
-        if book is None:
-            return False
-
-        session.delete(book)
-        try:
-            session.flush()
-        except IntegrityError as exc:
-            raise ConflictError("Book cannot be deleted because it is in use.") from exc
-        return True
+        """Delete a book via pkg_books.p_delete. Returns True if a row was removed."""
+        with session.connection().connection.cursor() as cur:
+            out_deleted = cur.var(int)
+            cur.callproc("BIBLIOTECA.pkg_books.p_delete", [id, out_deleted])
+            return bool(out_deleted.getvalue() == 1)
 
     def set_authors(self, session: Session, book_id: int, author_ids: list[int]) -> None:
-        """Replace the book's author associations with the given *author_ids*."""
-
-        book = self.get_by_id(session, book_id)
-        if book is None:
-            raise NotFoundError("Book not found.")
-        self._set_author_models(session, book, author_ids)
-        try:
-            session.flush()
-        except IntegrityError as exc:
-            raise ConflictError("Book violates database constraints.") from exc
-
-    def _with_relationships(self):
-        """Build the default query shape for API serialization."""
-
-        return select(Book).options(selectinload(Book.authors), selectinload(Book.category))
-
-    def _set_author_models(self, session: Session, book: Book, author_ids: list[int]) -> None:
-        """Load and assign author models, rejecting missing identifiers."""
-
-        unique_ids = list(dict.fromkeys(author_ids))
-        if not unique_ids:
-            book.authors = []
-            return
-
-        authors = list(session.scalars(select(Author).where(Author.id.in_(unique_ids))).all())
-        authors_by_id = {author.id: author for author in authors}
-        if len(authors_by_id) != len(unique_ids):
-            raise ConflictError("One or more authors do not exist.")
-        book.authors = [authors_by_id[author_id] for author_id in unique_ids]
-
-    def _flush_refresh_and_load(self, session: Session, book: Book) -> Book:
-        """Flush changes, translate constraint failures, and load response relationships."""
-
-        try:
-            session.flush()
-            session.refresh(book)
-        except IntegrityError as exc:
-            raise ConflictError("Book violates database constraints.") from exc
-        return self.get_with_authors(session, book.id) or book
+        """Replace all author associations: clear existing, then add each id in order."""
+        with session.connection().connection.cursor() as cur:
+            cur.callproc("BIBLIOTECA.pkg_books.p_clear_authors", [book_id])
+            for author_id in author_ids:
+                cur.callproc("BIBLIOTECA.pkg_books.p_add_author", [book_id, author_id])
+        session.expire_all()
 
 
-book_repository = SqlAlchemyBookRepository()
+book_repository = BookRepository()
 
 
-__all__ = ["SqlAlchemyBookRepository", "book_repository"]
+__all__ = ["BookRepository", "book_repository"]
