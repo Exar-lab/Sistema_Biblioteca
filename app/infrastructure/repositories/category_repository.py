@@ -59,3 +59,9 @@ class CategoryRepository:
             out_deleted = cur.var(int)
             cur.callproc("BIBLIOTECA.pkg_categories.p_delete", [id, out_deleted])
             return bool(out_deleted.getvalue() == 1)
+
+
+category_repository = CategoryRepository()
+
+
+__all__ = ["CategoryRepository", "category_repository"]

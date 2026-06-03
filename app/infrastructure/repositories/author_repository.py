@@ -71,3 +71,9 @@ class AuthorRepository:
             out_deleted = cur.var(int)
             cur.callproc("BIBLIOTECA.pkg_authors.p_delete", [id, out_deleted])
             return bool(out_deleted.getvalue() == 1)
+
+
+author_repository = AuthorRepository()
+
+
+__all__ = ["AuthorRepository", "author_repository"]

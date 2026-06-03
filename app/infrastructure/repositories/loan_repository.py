@@ -7,6 +7,7 @@ import datetime
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from app.application.errors import OutOfStockError
 from app.domain.models.loan import Loan
 from app.application.ports.loan_repository import LoanRepository as LoanRepositoryPort
 
@@ -46,39 +47,68 @@ class LoanRepository:
 
         Raises OutOfStockError if the Oracle trigger fires ORA-20001 (no stock).
         """
-        with session.connection().connection.cursor() as cur:
-            out_id = cur.var(int)
-            cur.callproc(
-                "BIBLIOTECA.pkg_loans.p_insert",
-                [
-                    data.user_id,
-                    data.book_id,
-                    data.loan_date,
-                    data.due_date,
-                    out_id,
-                ],
-            )
-            new_id = out_id.getvalue()
+        try:
+            with session.connection().connection.cursor() as cur:
+                out_id = cur.var(int)
+                cur.callproc(
+                    "BIBLIOTECA.pkg_loans.p_insert",
+                    [
+                        data.user_id,
+                        data.book_id,
+                        data.loan_date,
+                        data.due_date,
+                        out_id,
+                    ],
+                )
+                new_id = out_id.getvalue()
+        except Exception as exc:
+            if self._is_out_of_stock_error(exc):
+                raise OutOfStockError("Book has no available stock for loan.") from exc
+            raise
         session.expire_all()
         return self.get_by_id(session, new_id)
 
     def update(self, session: Session, id: int, data: Any) -> Loan:
         """Update a loan via pkg_loans.p_update and return the refreshed instance."""
+        current = self.get_by_id(session, id)
+
         session.execute(
             text(
                 "BEGIN BIBLIOTECA.pkg_loans.p_update("
-                ":p_id, :p_user_id, :p_book_id, :p_loan_date, :p_due_date); END;"
+                ":p_id, :p_user_id, :p_book_id, :p_loan_date, :p_due_date,"
+                " :p_return_date, :p_status); END;"
             ),
             {
                 "p_id": id,
-                "p_user_id": data.user_id,
-                "p_book_id": data.book_id,
-                "p_loan_date": data.loan_date,
-                "p_due_date": data.due_date,
+                "p_user_id": self._value(data, current, "user_id"),
+                "p_book_id": self._value(data, current, "book_id"),
+                "p_loan_date": self._value(data, current, "loan_date"),
+                "p_due_date": self._value(data, current, "due_date"),
+                "p_return_date": self._value(data, current, "return_date"),
+                "p_status": self._value(data, current, "status", "ACTIVE"),
             },
         )
         session.expire_all()
         return self.get_by_id(session, id)
+
+    def _value(self, data: Any, current: Loan | None, field: str, default: Any = None) -> Any:
+        """Return update payload value, falling back to the current row when omitted."""
+
+        fields_set = getattr(data, "model_fields_set", getattr(data, "__fields_set__", None))
+        if hasattr(data, field) and (fields_set is None or field in fields_set):
+            return getattr(data, field)
+        if current is not None:
+            return getattr(current, field)
+        return default
+
+    def _is_out_of_stock_error(self, exc: Exception) -> bool:
+        """Detect the Oracle stock trigger error through wrapped DBAPI messages."""
+
+        message = str(exc).lower()
+        original = getattr(exc, "orig", None)
+        if original is not None:
+            message = f"{message} {original}".lower()
+        return "ora-20001" in message or "no available stock" in message
 
     def delete(self, session: Session, id: int) -> bool:
         """Delete a loan via pkg_loans.p_delete. Returns True if a row was removed."""
@@ -109,3 +139,11 @@ class LoanRepository:
             out_cancelled = cur.var(int)
             cur.callproc("BIBLIOTECA.pkg_loans.p_cancel", [loan_id, out_cancelled])
             return bool(out_cancelled.getvalue() == 1)
+
+
+SqlAlchemyLoanRepository = LoanRepository
+
+loan_repository = LoanRepository()
+
+
+__all__ = ["LoanRepository", "SqlAlchemyLoanRepository", "loan_repository"]

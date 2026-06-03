@@ -54,3 +54,9 @@ class RoleRepository:
             out_deleted = cur.var(int)
             cur.callproc("BIBLIOTECA.pkg_roles.p_delete", [id, out_deleted])
             return bool(out_deleted.getvalue() == 1)
+
+
+role_repository = RoleRepository()
+
+
+__all__ = ["RoleRepository", "role_repository"]

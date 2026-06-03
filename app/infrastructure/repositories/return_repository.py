@@ -72,3 +72,9 @@ class ReturnRepository:
             out_deleted = cur.var(int)
             cur.callproc("BIBLIOTECA.pkg_returns.p_delete", [id, out_deleted])
             return bool(out_deleted.getvalue() == 1)
+
+
+return_repository = ReturnRepository()
+
+
+__all__ = ["ReturnRepository", "return_repository"]

@@ -96,3 +96,9 @@ class BookRepository:
             for author_id in author_ids:
                 cur.callproc("BIBLIOTECA.pkg_books.p_add_author", [book_id, author_id])
         session.expire_all()
+
+
+book_repository = BookRepository()
+
+
+__all__ = ["BookRepository", "book_repository"]
