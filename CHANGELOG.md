@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.6.0...sistema-biblioteca-v0.7.0) (2026-06-03)
+
+
+### Features
+
+* **db:** add Oracle sequences and PL/SQL stored procedure packages ([301557e](https://github.com/Exar-lab/Sistema_Biblioteca/commit/301557e2ca5df12acca099ae7a4f2442a1eb83ba))
+* **db:** add Oracle sequences and PL/SQL stored procedure packages ([9ea16a4](https://github.com/Exar-lab/Sistema_Biblioteca/commit/9ea16a4a375cdcde4f39fafdacfcc6402490020b)), closes [#43](https://github.com/Exar-lab/Sistema_Biblioteca/issues/43)
+* **persistence:** implement Oracle stored procedure repository layer ([33e8b3b](https://github.com/Exar-lab/Sistema_Biblioteca/commit/33e8b3b913441900ea6b36285325ae900f5a1999))
+* **persistence:** implement Oracle stored procedure repository layer ([986edcf](https://github.com/Exar-lab/Sistema_Biblioteca/commit/986edcf697826a2e7ec2098750682aa823f5fe5f)), closes [#44](https://github.com/Exar-lab/Sistema_Biblioteca/issues/44)
+
+
+### Bug Fixes
+
+* **db:** address Oracle schema review comments ([42915ab](https://github.com/Exar-lab/Sistema_Biblioteca/commit/42915abb071436ab749a3035bf73a09262d4d2a0))
+* **persistence:** restore repository wiring ([49a4d1c](https://github.com/Exar-lab/Sistema_Biblioteca/commit/49a4d1c8ba98ad200b4493a29d325ad788196bbb))
+
 ## [0.6.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.5.0...sistema-biblioteca-v0.6.0) (2026-06-01)
 
 
