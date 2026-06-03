@@ -29,6 +29,7 @@ def fake_loan() -> Loan:
     l.book_id = 20
     l.loan_date = datetime.date(2024, 1, 10)
     l.due_date = datetime.date(2024, 2, 10)
+    l.return_date = None
     l.status = "ACTIVE"
     return l
 
@@ -50,6 +51,9 @@ def fake_update_data() -> MagicMock:
     d.book_id = 20
     d.loan_date = datetime.date(2024, 1, 10)
     d.due_date = datetime.date(2024, 3, 10)
+    d.return_date = None
+    d.status = "ACTIVE"
+    d.model_fields_set = {"user_id", "book_id", "loan_date", "due_date", "return_date", "status"}
     return d
 
 
@@ -148,11 +152,19 @@ def test_update_calls_p_update(
     repo.update(mock_session, 15, fake_update_data)
 
     assert mock_session.execute.called
-    first_call = mock_session.execute.call_args_list[0]
-    sql_text = str(first_call[0][0])
+    update_call = next(
+        call for call in mock_session.execute.call_args_list if "p_update" in str(call[0][0])
+    )
+    sql_text = str(update_call[0][0])
     assert "p_update" in sql_text
-    binds = first_call[0][1]
+    binds = update_call[0][1]
     assert binds["p_id"] == 15
+    assert binds["p_user_id"] == fake_update_data.user_id
+    assert binds["p_book_id"] == fake_update_data.book_id
+    assert binds["p_loan_date"] == fake_update_data.loan_date
+    assert binds["p_due_date"] == fake_update_data.due_date
+    assert binds["p_return_date"] is None
+    assert binds["p_status"] == "ACTIVE"
 
 
 # ---------------------------------------------------------------------------
