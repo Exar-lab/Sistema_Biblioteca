@@ -61,6 +61,34 @@ class UserRead(UserBase, IdSchema, TimestampSchema):
     role: RoleRead | None = None
 
 
+class UserCreateWithHash(BaseSchema):
+    """Internal schema used to pass a hashed-password user record to the repository.
+
+    This schema must NOT be exposed in any API response. It exists solely to carry
+    attribute access (data.username, data.password_hash, etc.) into the repository
+    layer without exposing a plain-text password field.
+    """
+
+    username: str = Field(..., min_length=3, max_length=50)
+    full_name: str = Field(..., min_length=2, max_length=120)
+    email: str = Field(
+        ...,
+        min_length=5,
+        max_length=255,
+        pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$",
+    )
+    phone: str | None = Field(default=None, max_length=30)
+    password_hash: str = Field(..., description="Bcrypt hash — never return in API responses.")
+    is_active: bool = Field(default=True)
+    role_id: int = Field(default=2, gt=0)
+
+
+class UserActiveToggle(BaseSchema):
+    """Payload used to toggle the active state of a user."""
+
+    is_active: bool = Field(..., description="Set to true to activate, false to deactivate.")
+
+
 class UserLogin(CredentialSchema):
     """Login payload."""
 
@@ -78,6 +106,8 @@ class UserChangePassword(CredentialSchema):
 __all__ = [
     "UserBase",
     "UserCreate",
+    "UserCreateWithHash",
+    "UserActiveToggle",
     "UserUpdate",
     "UserRead",
     "UserLogin",

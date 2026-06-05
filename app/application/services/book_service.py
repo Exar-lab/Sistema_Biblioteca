@@ -13,10 +13,19 @@ class BookService:
     def __init__(self, repository: BookRepository) -> None:
         self._repository = repository
 
-    def list_books(self, session: Any) -> list[Any]:
-        """Return all books."""
+    def list_books(
+        self,
+        session: Any,
+        *,
+        title: str | None = None,
+        author: str | None = None,
+        category: str | None = None,
+    ) -> list[Any]:
+        """Return all books, forwarding optional filters to the repository."""
 
-        return self._repository.list_all(session)
+        return self._repository.list_all(
+            session, title=title, author=author, category=category
+        )
 
     def get_book(self, session: Any, book_id: int) -> Any:
         """Return a book or raise when it does not exist."""

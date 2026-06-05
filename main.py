@@ -13,6 +13,7 @@ from app.api.v1.routers.loans import router as loans_router
 from app.api.v1.routers.reports import router as reports_router
 from app.api.v1.routers.returns import router as returns_router
 from app.api.v1.routers.roles import router as roles_router
+from app.api.v1.routers.users import router as users_router
 from app.core.database import SessionLocal, run_db_smoke_check
 
 
@@ -32,6 +33,7 @@ app.include_router(loans_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
 app.include_router(returns_router, prefix="/api/v1")
 app.include_router(roles_router, prefix="/api/v1")
+app.include_router(users_router, prefix="/api/v1")
 
 
 @app.get("/", tags=["Health"])

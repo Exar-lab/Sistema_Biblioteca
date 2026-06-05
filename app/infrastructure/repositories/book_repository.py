@@ -2,10 +2,12 @@
 
 from typing import Any
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session, selectinload
 
+from app.domain.models.author import Author
 from app.domain.models.book import Book
+from app.domain.models.category import Category
 from app.application.ports.book_repository import BookRepository as BookRepositoryPort
 
 
@@ -20,9 +22,41 @@ class BookRepository:
         """Return the Book with *id*, or None."""
         return session.execute(select(Book).where(Book.id == id)).scalar_one_or_none()
 
-    def list_all(self, session: Session) -> list[Book]:
-        """Return all books."""
-        return list(session.execute(select(Book)).scalars().all())
+    def list_all(
+        self,
+        session: Session,
+        *,
+        title: str | None = None,
+        author: str | None = None,
+        category: str | None = None,
+    ) -> list[Book]:
+        """Return all books, optionally filtered by title, author, or category.
+
+        Filtering uses UPPER(...) LIKE UPPER(:param) with %value% wrapping —
+        Oracle-safe case-insensitive substring match (no ILIKE).
+        Author filter joins through the book_authors association and uses
+        .distinct() to prevent row duplication.
+        """
+        stmt = select(Book)
+
+        if author is not None:
+            stmt = stmt.join(Book.authors).where(
+                func.upper(Author.first_name + " " + Author.last_name).like(
+                    func.upper(f"%{author}%")
+                )
+            ).distinct()
+
+        if category is not None:
+            stmt = stmt.join(Book.category).where(
+                func.upper(Category.name).like(func.upper(f"%{category}%"))
+            )
+
+        if title is not None:
+            stmt = stmt.where(
+                func.upper(Book.title).like(func.upper(f"%{title}%"))
+            )
+
+        return list(session.execute(stmt).scalars().all())
 
     def get_with_authors(self, session: Session, id: int) -> Book | None:
         """Return the Book with *id* with its authors eagerly loaded, or None."""

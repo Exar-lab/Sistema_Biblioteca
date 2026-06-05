@@ -20,11 +20,17 @@ class UserRepository:
         """Return the LibraryUser with *id*, or None."""
         return session.execute(select(LibraryUser).where(LibraryUser.id == id)).scalar_one_or_none()
 
+    def get_by_username(self, session: Session, username: str) -> LibraryUser | None:
+        """Return the LibraryUser with *username*, or None."""
+        return session.execute(
+            select(LibraryUser).where(LibraryUser.username == username)
+        ).scalar_one_or_none()
+
     def list_all(self, session: Session) -> list[LibraryUser]:
         """Return all library users."""
         return list(session.execute(select(LibraryUser)).scalars().all())
 
-    def create(self, session: Session, data: Any) -> LibraryUser:
+    def create(self, session: Session, data: Any) -> LibraryUser | None:
         """Insert a user via pkg_library_users.p_insert (OUT param) and return the new instance."""
         with session.connection().connection.cursor() as cur:
             out_id = cur.var(int)
@@ -45,7 +51,7 @@ class UserRepository:
         session.expire_all()
         return self.get_by_id(session, new_id)
 
-    def update(self, session: Session, id: int, data: Any) -> LibraryUser:
+    def update(self, session: Session, id: int, data: Any) -> LibraryUser | None:
         """Update a user via pkg_library_users.p_update and return the refreshed instance."""
         session.execute(
             text(
