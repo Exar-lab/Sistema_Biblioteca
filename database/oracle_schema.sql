@@ -325,14 +325,20 @@ CREATE OR REPLACE PROCEDURE BIBLIOTECA.p_reset_sequence(
 ) AS
     v_max_id     NUMBER;
     v_next_value NUMBER;
+    v_increment  NUMBER;
 BEGIN
     EXECUTE IMMEDIATE 'SELECT NVL(MAX(id), 0) + 1 FROM BIBLIOTECA.' || p_table_name INTO v_max_id;
     EXECUTE IMMEDIATE 'SELECT BIBLIOTECA.' || p_sequence_name || '.NEXTVAL FROM dual' INTO v_next_value;
 
     IF v_next_value < v_max_id THEN
-        EXECUTE IMMEDIATE 'ALTER SEQUENCE BIBLIOTECA.' || p_sequence_name || ' INCREMENT BY ' || (v_max_id - v_next_value);
+        v_increment := v_max_id - v_next_value - 1;
+        IF v_increment > 0 THEN
+            EXECUTE IMMEDIATE 'ALTER SEQUENCE BIBLIOTECA.' || p_sequence_name || ' INCREMENT BY ' || v_increment;
+        END IF;
         EXECUTE IMMEDIATE 'SELECT BIBLIOTECA.' || p_sequence_name || '.NEXTVAL FROM dual' INTO v_next_value;
-        EXECUTE IMMEDIATE 'ALTER SEQUENCE BIBLIOTECA.' || p_sequence_name || ' INCREMENT BY 1';
+        IF v_increment > 0 THEN
+            EXECUTE IMMEDIATE 'ALTER SEQUENCE BIBLIOTECA.' || p_sequence_name || ' INCREMENT BY 1';
+        END IF;
     END IF;
 END;
 /
