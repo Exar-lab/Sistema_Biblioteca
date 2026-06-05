@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.application.services.book_service import BookService
@@ -24,10 +24,16 @@ BookServiceDep = Annotated[BookService, Depends(get_book_service)]
 
 
 @router.get("/", response_model=list[BookRead])
-def list_books(db: DbSession, service: BookServiceDep) -> list[object]:
-    """List all books."""
+def list_books(
+    db: DbSession,
+    service: BookServiceDep,
+    title: str | None = Query(default=None, description="Case-insensitive substring match on book title."),
+    author: str | None = Query(default=None, description="Case-insensitive substring match on author full name."),
+    category: str | None = Query(default=None, description="Case-insensitive substring match on category name."),
+) -> list[object]:
+    """List all books, optionally filtered by title, author, and/or category."""
 
-    return service.list_books(db)
+    return service.list_books(db, title=title, author=author, category=category)
 
 
 @router.post("/", response_model=BookRead, status_code=status.HTTP_201_CREATED)

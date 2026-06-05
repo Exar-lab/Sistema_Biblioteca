@@ -14,8 +14,15 @@ class BookRepository(Protocol):
         """Return the book with *id*, or None if it does not exist."""
         ...
 
-    def list_all(self, session: Any) -> list[Any]:
-        """Return all books."""
+    def list_all(
+        self,
+        session: Any,
+        *,
+        title: str | None = None,
+        author: str | None = None,
+        category: str | None = None,
+    ) -> list[Any]:
+        """Return all books, optionally filtered by title, author, or category."""
         ...
 
     def create(self, session: Any, data: Any) -> Any:
