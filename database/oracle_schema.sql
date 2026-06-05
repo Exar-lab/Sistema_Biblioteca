@@ -315,19 +315,6 @@ BEGIN
 END;
 /
 
-MERGE INTO BIBLIOTECA.roles target
-USING (
-    SELECT 'Admin' AS name, 'System administrator role.' AS description FROM dual
-    UNION ALL
-    SELECT 'Usuario' AS name, 'Default library user role.' AS description FROM dual
-) source
-ON (target.name = source.name)
-WHEN NOT MATCHED THEN
-    INSERT (name, description)
-    VALUES (source.name, source.description);
-
-COMMIT;
-
 -- =============================================================================
 -- Sequences (idempotent) — seq_*_id for each aggregate
 -- =============================================================================
@@ -422,6 +409,19 @@ BEGIN
     END IF;
 END;
 /
+
+MERGE INTO BIBLIOTECA.roles target
+USING (
+    SELECT 'Admin' AS name, 'System administrator role.' AS description FROM dual
+    UNION ALL
+    SELECT 'Usuario' AS name, 'Default library user role.' AS description FROM dual
+) source
+ON (target.name = source.name)
+WHEN NOT MATCHED THEN
+    INSERT (id, name, description)
+    VALUES (BIBLIOTECA.seq_roles_id.NEXTVAL, source.name, source.description);
+
+COMMIT;
 
 -- =============================================================================
 -- PL/SQL Packages
