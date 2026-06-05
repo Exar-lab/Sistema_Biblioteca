@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.7.0...sistema-biblioteca-v0.8.0) (2026-06-05)
+
+
+### Features
+
+* **api:** expose missing endpoints and fix registration service ([dd8e330](https://github.com/Exar-lab/Sistema_Biblioteca/commit/dd8e33065bd91747f57b244671dbf87c12ae2d1b))
+* **api:** expose missing endpoints and fix registration service ([d5a422c](https://github.com/Exar-lab/Sistema_Biblioteca/commit/d5a422c72e49b503b212f4680444d3019842b52a))
+
 ## [0.7.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.6.0...sistema-biblioteca-v0.7.0) (2026-06-03)
 
 
