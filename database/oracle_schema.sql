@@ -319,19 +319,36 @@ END;
 -- Sequences (idempotent) — seq_*_id for each aggregate
 -- =============================================================================
 
-CREATE OR REPLACE PROCEDURE BIBLIOTECA.p_reset_sequence(
+CREATE OR REPLACE PROCEDURE BIBLIOTECA.p_ensure_sequence(
     p_sequence_name IN VARCHAR2,
     p_table_name    IN VARCHAR2
 ) AS
-    v_max_id     NUMBER;
+    v_count      NUMBER;
+    v_start_with NUMBER;
     v_next_value NUMBER;
     v_increment  NUMBER;
 BEGIN
-    EXECUTE IMMEDIATE 'SELECT NVL(MAX(id), 0) + 1 FROM BIBLIOTECA.' || p_table_name INTO v_max_id;
+    SELECT COUNT(*)
+    INTO v_count
+    FROM all_sequences
+    WHERE sequence_owner = 'BIBLIOTECA'
+      AND sequence_name = UPPER(p_sequence_name);
+
+    EXECUTE IMMEDIATE 'SELECT NVL(MAX(id), 0) + 1 FROM BIBLIOTECA.' || p_table_name INTO v_start_with;
+
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.' || p_sequence_name ||
+            ' START WITH ' || v_start_with || ' INCREMENT BY 1 NOCACHE NOCYCLE';
+        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.' || p_sequence_name || '.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.' || p_sequence_name || ' already exists; skipped create.');
+
     EXECUTE IMMEDIATE 'SELECT BIBLIOTECA.' || p_sequence_name || '.NEXTVAL FROM dual' INTO v_next_value;
 
-    IF v_next_value < v_max_id THEN
-        v_increment := v_max_id - v_next_value - 1;
+    IF v_next_value < v_start_with THEN
+        v_increment := v_start_with - v_next_value - 1;
         IF v_increment > 0 THEN
             EXECUTE IMMEDIATE 'ALTER SEQUENCE BIBLIOTECA.' || p_sequence_name || ' INCREMENT BY ' || v_increment;
         END IF;
@@ -343,105 +360,14 @@ BEGIN
 END;
 /
 
-DECLARE
-    v_count NUMBER;
 BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_ROLES_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_roles_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_roles_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_roles_id already exists; skipped.');
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_LIBRARY_USERS_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_library_users_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_library_users_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_library_users_id already exists; skipped.');
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_CATEGORIES_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_categories_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_categories_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_categories_id already exists; skipped.');
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_AUTHORS_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_authors_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_authors_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_authors_id already exists; skipped.');
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_BOOKS_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_books_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_books_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_books_id already exists; skipped.');
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_LOANS_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_loans_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_loans_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_loans_id already exists; skipped.');
-    END IF;
-END;
-/
-
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO v_count FROM all_sequences WHERE sequence_owner = 'BIBLIOTECA' AND sequence_name = 'SEQ_RETURNS_ID';
-    IF v_count = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE SEQUENCE BIBLIOTECA.seq_returns_id START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-        DBMS_OUTPUT.PUT_LINE('Created sequence BIBLIOTECA.seq_returns_id.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Sequence BIBLIOTECA.seq_returns_id already exists; skipped.');
-    END IF;
-END;
-/
-
-BEGIN
-    BIBLIOTECA.p_reset_sequence('seq_roles_id', 'roles');
-    BIBLIOTECA.p_reset_sequence('seq_library_users_id', 'library_users');
-    BIBLIOTECA.p_reset_sequence('seq_categories_id', 'categories');
-    BIBLIOTECA.p_reset_sequence('seq_authors_id', 'authors');
-    BIBLIOTECA.p_reset_sequence('seq_books_id', 'books');
-    BIBLIOTECA.p_reset_sequence('seq_loans_id', 'loans');
-    BIBLIOTECA.p_reset_sequence('seq_returns_id', 'returns');
+    BIBLIOTECA.p_ensure_sequence('seq_roles_id', 'roles');
+    BIBLIOTECA.p_ensure_sequence('seq_library_users_id', 'library_users');
+    BIBLIOTECA.p_ensure_sequence('seq_categories_id', 'categories');
+    BIBLIOTECA.p_ensure_sequence('seq_authors_id', 'authors');
+    BIBLIOTECA.p_ensure_sequence('seq_books_id', 'books');
+    BIBLIOTECA.p_ensure_sequence('seq_loans_id', 'loans');
+    BIBLIOTECA.p_ensure_sequence('seq_returns_id', 'returns');
 END;
 /
 
@@ -459,7 +385,7 @@ WHEN NOT MATCHED THEN
 COMMIT;
 
 BEGIN
-    BIBLIOTECA.p_reset_sequence('seq_roles_id', 'roles');
+    BIBLIOTECA.p_ensure_sequence('seq_roles_id', 'roles');
 END;
 /
 
