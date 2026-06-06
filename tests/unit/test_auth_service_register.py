@@ -13,7 +13,9 @@ import pytest
 
 from app.application.errors import ConflictError
 from app.application.services.auth_service import AuthService
-from app.schemas.users import UserCreate, UserCreateWithHash
+from pydantic import ValidationError
+
+from app.schemas.users import UserCreateWithHash, UserRegister
 
 
 # ---------------------------------------------------------------------------
@@ -30,8 +32,8 @@ def _make_user_create(
     full_name: str = "John Doe",
     email: str = "john@example.com",
     password: str = "secret1234",
-) -> UserCreate:
-    return UserCreate(
+) -> UserRegister:
+    return UserRegister(
         username=username,
         full_name=full_name,
         email=email,
@@ -45,6 +47,37 @@ def _make_user_create(
 
 class TestAuthServiceRegister:
     """AuthService.register() — unit suite."""
+
+    def test_public_register_payload_rejects_role_and_active_fields(self) -> None:
+        """Self-registration must not accept privilege or account-state fields."""
+        with pytest.raises(ValidationError):
+            UserRegister(
+                username="johndoe",
+                full_name="John Doe",
+                email="john@example.com",
+                password="secret1234",  # type: ignore[arg-type]
+                role_id=1,
+            )
+
+        with pytest.raises(ValidationError):
+            UserRegister(
+                username="johndoe",
+                full_name="John Doe",
+                email="john@example.com",
+                password="secret1234",  # type: ignore[arg-type]
+                is_active=False,
+            )
+
+    def test_public_register_payload_preserves_password_whitespace(self) -> None:
+        """Registration must not normalize credential values before hashing."""
+        payload = UserRegister(
+            username="johndoe",
+            full_name="John Doe",
+            email="john@example.com",
+            password=" secret1234 ",  # type: ignore[arg-type]
+        )
+
+        assert payload.password.get_secret_value() == " secret1234 "
 
     def test_register_passes_object_with_password_hash_attribute(self) -> None:
         """Repo.create() receives an object (not a dict) with .password_hash."""
@@ -85,6 +118,8 @@ class TestAuthServiceRegister:
         assert not hasattr(data_arg, "password") or data_arg.password_hash, (
             "plain-text password must not be the primary credential on the payload"
         )
+        assert data_arg.role_id == 2, "public registration must always use the Usuario role"
+        assert data_arg.is_active is True, "public registration must always create active users"
 
     def test_register_hashes_password_before_persisting(self) -> None:
         """password_hash must differ from the plain-text password."""

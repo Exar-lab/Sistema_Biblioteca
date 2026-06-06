@@ -36,13 +36,11 @@ class LoanCreate(LoanBase):
 
 
 class LoanUpdate(BaseSchema):
-    """Payload used to update loan workflow state."""
+    """Payload used to update a loan's safe admin-editable fields."""
 
     model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
 
     due_date: date | None = None
-    return_date: date | None = None
-    status: LoanStatus | None = None
 
 
 class LoanRead(LoanBase, IdSchema, TimestampSchema):

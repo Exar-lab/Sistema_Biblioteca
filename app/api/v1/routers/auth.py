@@ -10,7 +10,7 @@ from app.application.services.auth_service import AuthService
 from app.core.database import get_db
 from app.infrastructure.repositories.user_repository import user_repository
 from app.schemas.auth import LoginResponse
-from app.schemas.users import UserCreate, UserLogin, UserRead
+from app.schemas.users import UserChangePassword, UserLogin, UserRead, UserRegister
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -33,7 +33,7 @@ def login(payload: UserLogin, db: DbSession, service: AuthServiceDep) -> LoginRe
 
 
 @router.post("/register", response_model=UserRead, status_code=201)
-def register(payload: UserCreate, db: DbSession, service: AuthServiceDep) -> UserRead:
+def register(payload: UserRegister, db: DbSession, service: AuthServiceDep) -> UserRead:
     """Register a new user account.
 
     Returns 201 with UserRead on success.
@@ -49,6 +49,18 @@ def get_me(current_user: Annotated[UserRead, Depends(get_current_user)]) -> User
     """Return the authenticated user's profile."""
 
     return current_user
+
+
+@router.patch("/me/password", response_model=UserRead)
+def change_password(
+    payload: UserChangePassword,
+    current_user: Annotated[UserRead, Depends(get_current_user)],
+    db: DbSession,
+    service: AuthServiceDep,
+) -> UserRead:
+    """Change the authenticated user's password."""
+
+    return service.change_password(db, current_user.id, payload)
 
 
 __all__ = ["router", "get_auth_service"]

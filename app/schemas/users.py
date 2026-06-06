@@ -24,7 +24,7 @@ class UserBase(BaseSchema):
 
 
 class UserCreate(UserBase):
-    """Payload used to create a user."""
+    """Payload used by administrators to create a user."""
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -33,6 +33,28 @@ class UserCreate(UserBase):
         validate_assignment=True,
     )
 
+    password: SecretStr = Field(..., min_length=8, max_length=128, description="Plain password.")
+
+
+class UserRegister(CredentialSchema):
+    """Public self-registration payload.
+
+    Role and active-state fields are intentionally excluded so public clients
+    cannot request elevated privileges or inactive-account state.
+    """
+
+    model_config = ConfigDict(**CredentialSchema.model_config, extra="forbid")
+
+    username: str = Field(..., min_length=3, max_length=50, description="Login username.")
+    full_name: str = Field(..., min_length=2, max_length=120, description="User full name.")
+    email: str = Field(
+        ...,
+        min_length=5,
+        max_length=255,
+        pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$",
+        description="Email address.",
+    )
+    phone: str | None = Field(default=None, max_length=30, description="Phone number.")
     password: SecretStr = Field(..., min_length=8, max_length=128, description="Plain password.")
 
 
@@ -106,6 +128,7 @@ class UserChangePassword(CredentialSchema):
 __all__ = [
     "UserBase",
     "UserCreate",
+    "UserRegister",
     "UserCreateWithHash",
     "UserActiveToggle",
     "UserUpdate",

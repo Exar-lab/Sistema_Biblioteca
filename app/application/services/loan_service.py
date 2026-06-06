@@ -6,7 +6,7 @@ from app.application.errors import ConflictError, NotFoundError
 from app.application.ports.book_repository import BookRepository
 from app.application.ports.loan_repository import LoanRepository
 from app.application.ports.user_repository import UserRepository
-from app.schemas.circulation.loans import LoanCreate
+from app.schemas.circulation.loans import LoanCreate, LoanUpdate
 
 
 class LoanService:
@@ -35,6 +35,52 @@ class LoanService:
 
         self._ensure_user_exists(session, user_id)
         return self._loan_repository.get_by_user(session, user_id)
+
+    def get_loans_by_book(self, session: Any, book_id: int) -> list[Any]:
+        """Return a book's loan history after verifying the book exists."""
+
+        self._ensure_book_exists(session, book_id)
+        return self._loan_repository.get_by_book(session, book_id)
+
+    def update_loan(self, session: Any, loan_id: int, data: LoanUpdate) -> Any:
+        """Update a loan or raise when it does not exist."""
+
+        loan = self._loan_repository.get_by_id(session, loan_id)
+        if loan is None:
+            raise NotFoundError("Loan not found.")
+
+        loan_date = getattr(loan, "loan_date", None)
+        if data.due_date is not None and loan_date is not None and data.due_date < loan_date:
+            raise ConflictError("due_date must be on or after loan_date.")
+
+        updated = self._loan_repository.update(session, loan_id, data)
+        if updated is None:
+            raise NotFoundError("Loan not found.")
+        return updated
+
+    def delete_loan(self, session: Any, loan_id: int) -> None:
+        """Delete a loan or raise when it does not exist."""
+
+        if not self._loan_repository.delete(session, loan_id):
+            raise NotFoundError("Loan not found.")
+
+    def cancel_loan(self, session: Any, loan_id: int) -> Any:
+        """Cancel an active loan and return the refreshed record."""
+
+        loan = self._loan_repository.get_by_id(session, loan_id)
+        if loan is None:
+            raise NotFoundError("Loan not found.")
+
+        if str(getattr(loan, "status", "ACTIVE")).upper() != "ACTIVE":
+            raise ConflictError("Loan is already returned or cancelled.")
+
+        if not self._loan_repository.cancel(session, loan_id):
+            raise NotFoundError("Loan not found.")
+
+        refreshed = self._loan_repository.get_by_id(session, loan_id)
+        if refreshed is None:
+            raise NotFoundError("Loan not found.")
+        return refreshed
 
     def create_loan(self, session: Any, data: LoanCreate) -> Any:
         """Create a loan after application-owned workflow checks."""

@@ -13,6 +13,7 @@ from pydantic import ValidationError
 os.environ["DATABASE_URL"] = "oracle+oracledb://user:pass@127.0.0.1:1/?service_name=FREEPDB1"
 
 import main  # noqa: E402
+from app.api import dependencies  # noqa: E402
 from app.api.v1.routers.returns import get_return_service  # noqa: E402
 from app.application.errors import ConflictError, NotFoundError  # noqa: E402
 from app.application.services.return_service import ReturnService  # noqa: E402
@@ -111,6 +112,39 @@ def build_service(
     )
 
 
+@dataclass
+class RoleStub:
+    id: int = 1
+    name: str = "Admin"
+    description: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
+class UserStub:
+    id: int
+    username: str = "admin"
+    full_name: str = "Admin User"
+    email: str = "admin@example.com"
+    phone: str | None = None
+    is_active: bool = True
+    role_id: int | None = 1
+    role: Any = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class FakeUserRepository:
+    def __init__(self, user: UserStub | None = None) -> None:
+        self.user = user or UserStub(id=1, role=RoleStub())
+
+    def get_by_id(self, _session: Any, id: int) -> UserStub | None:
+        if self.user.id == id:
+            return self.user
+        return None
+
+
 # ── Schema ────────────────────────────────────────────────────────────────────
 
 def test_return_schema_matches_oracle_fields_and_forbids_stale_extras() -> None:
@@ -188,18 +222,28 @@ def test_return_service_raises_not_found_on_missing_delete() -> None:
 
 # ── Router ────────────────────────────────────────────────────────────────────
 
+
+def _configure_admin_auth(monkeypatch: pytest.MonkeyPatch, user: UserStub | None = None) -> None:
+    monkeypatch.setattr(dependencies, "decode_token", lambda _token: {"sub": "1"})
+    monkeypatch.setattr(dependencies, "user_repository", FakeUserRepository(user or UserStub(id=1, role=RoleStub())))
+
+
 def test_returns_router_is_mounted_and_creates_return() -> None:
     service = build_service()
 
+    monkeypatch = pytest.MonkeyPatch()
+    _configure_admin_auth(monkeypatch)
     main.app.dependency_overrides[get_return_service] = lambda: service
     main.app.dependency_overrides[get_db] = lambda: object()
     try:
         response = TestClient(main.app).post(
             "/api/v1/returns/",
+            headers={"Authorization": "Bearer token"},
             json={"loan_id": 1, "fine_amount": "2.50", "notes": "Slight delay"},
         )
     finally:
         main.app.dependency_overrides.clear()
+        monkeypatch.undo()
 
     assert response.status_code == 201
     payload = response.json()
@@ -210,8 +254,8 @@ def test_returns_router_is_mounted_and_creates_return() -> None:
     assert "processed_by_user_id" not in payload
 
 
-def test_returns_router_maps_missing_loan_to_404() -> None:
-    service = build_service(loan_repository=FakeLoanRepository(loans={}))
+def test_returns_router_requires_auth_for_create_return() -> None:
+    service = build_service()
 
     main.app.dependency_overrides[get_return_service] = lambda: service
     main.app.dependency_overrides[get_db] = lambda: object()
@@ -220,6 +264,92 @@ def test_returns_router_maps_missing_loan_to_404() -> None:
     finally:
         main.app.dependency_overrides.clear()
 
+    assert response.status_code == 403
+
+
+def test_returns_router_requires_auth_for_read_routes() -> None:
+    service = build_service()
+
+    main.app.dependency_overrides[get_return_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        client = TestClient(main.app)
+        list_response = client.get("/api/v1/returns/")
+        return_response = client.get("/api/v1/returns/1")
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert list_response.status_code == 403
+    assert return_response.status_code == 403
+
+
+def test_returns_router_rejects_non_admin_for_create_and_update(monkeypatch: pytest.MonkeyPatch) -> None:
+    service = build_service()
+
+    _configure_admin_auth(monkeypatch, UserStub(id=1, role=RoleStub(name="Usuario")))
+    main.app.dependency_overrides[get_return_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        client = TestClient(main.app)
+        create_response = client.post(
+            "/api/v1/returns/",
+            headers={"Authorization": "Bearer token"},
+            json={"loan_id": 1},
+        )
+        update_response = client.patch(
+            "/api/v1/returns/1",
+            headers={"Authorization": "Bearer token"},
+            json={"notes": "Updated"},
+        )
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert create_response.status_code == 403
+    assert update_response.status_code == 403
+
+
+def test_returns_router_allows_admin_for_create_and_update(monkeypatch: pytest.MonkeyPatch) -> None:
+    service = build_service()
+
+    _configure_admin_auth(monkeypatch)
+    main.app.dependency_overrides[get_return_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        client = TestClient(main.app)
+        create_response = client.post(
+            "/api/v1/returns/",
+            headers={"Authorization": "Bearer token"},
+            json={"loan_id": 1},
+        )
+        update_response = client.patch(
+            "/api/v1/returns/1",
+            headers={"Authorization": "Bearer token"},
+            json={"notes": "Updated"},
+        )
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert create_response.status_code == 201
+    assert update_response.status_code == 200
+
+
+def test_returns_router_maps_missing_loan_to_404() -> None:
+    service = build_service(loan_repository=FakeLoanRepository(loans={}))
+
+    monkeypatch = pytest.MonkeyPatch()
+    _configure_admin_auth(monkeypatch)
+    main.app.dependency_overrides[get_return_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        response = TestClient(main.app).post(
+            "/api/v1/returns/",
+            headers={"Authorization": "Bearer token"},
+            json={"loan_id": 1},
+        )
+    finally:
+        main.app.dependency_overrides.clear()
+        monkeypatch.undo()
+
     assert response.status_code == 404
     assert response.json() == {"detail": "Loan not found."}
 
@@ -227,12 +357,15 @@ def test_returns_router_maps_missing_loan_to_404() -> None:
 def test_returns_router_maps_missing_return_to_404() -> None:
     service = build_service()
 
+    monkeypatch = pytest.MonkeyPatch()
+    _configure_admin_auth(monkeypatch)
     main.app.dependency_overrides[get_return_service] = lambda: service
     main.app.dependency_overrides[get_db] = lambda: object()
     try:
-        response = TestClient(main.app).get("/api/v1/returns/999")
+        response = TestClient(main.app).get("/api/v1/returns/999", headers={"Authorization": "Bearer token"})
     finally:
         main.app.dependency_overrides.clear()
+        monkeypatch.undo()
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Return not found."}
@@ -242,15 +375,35 @@ def test_returns_router_maps_duplicate_return_to_409() -> None:
     existing = ReturnStub(id=1, loan_id=1)
     service = build_service(return_repository=FakeReturnRepository(existing_return=existing))
 
+    monkeypatch = pytest.MonkeyPatch()
+    _configure_admin_auth(monkeypatch)
     main.app.dependency_overrides[get_return_service] = lambda: service
     main.app.dependency_overrides[get_db] = lambda: object()
     try:
-        response = TestClient(main.app).post("/api/v1/returns/", json={"loan_id": 1})
+        response = TestClient(main.app).post(
+            "/api/v1/returns/",
+            headers={"Authorization": "Bearer token"},
+            json={"loan_id": 1},
+        )
     finally:
         main.app.dependency_overrides.clear()
+        monkeypatch.undo()
 
     assert response.status_code == 409
     assert "already exists" in response.json()["detail"]
+
+
+def test_returns_router_delete_method_is_not_allowed() -> None:
+    service = build_service()
+
+    main.app.dependency_overrides[get_return_service] = lambda: service
+    main.app.dependency_overrides[get_db] = lambda: object()
+    try:
+        response = TestClient(main.app).delete("/api/v1/returns/1")
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 405
 
 
 def test_returns_router_lists_returns() -> None:
@@ -258,12 +411,15 @@ def test_returns_router_lists_returns() -> None:
     repo.items[1] = ReturnStub(id=1, loan_id=1)
     service = ReturnService(repo, FakeLoanRepository())
 
+    monkeypatch = pytest.MonkeyPatch()
+    _configure_admin_auth(monkeypatch)
     main.app.dependency_overrides[get_return_service] = lambda: service
     main.app.dependency_overrides[get_db] = lambda: object()
     try:
-        response = TestClient(main.app).get("/api/v1/returns/")
+        response = TestClient(main.app).get("/api/v1/returns/", headers={"Authorization": "Bearer token"})
     finally:
         main.app.dependency_overrides.clear()
+        monkeypatch.undo()
 
     assert response.status_code == 200
     assert response.json()[0]["loan_id"] == 1
