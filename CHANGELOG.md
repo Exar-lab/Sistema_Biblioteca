@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.8.0...sistema-biblioteca-v0.9.0) (2026-06-06)
+
+
+### Features
+
+* **api:** expose secure circulation endpoints ([5e49dff](https://github.com/Exar-lab/Sistema_Biblioteca/commit/5e49dffc3f06576004c2feeab1841f5ca5dcbddf))
+* **api:** expose secure circulation endpoints ([06ceb20](https://github.com/Exar-lab/Sistema_Biblioteca/commit/06ceb20daa993814f1bbf808669caf98a1f30ad9))
+
+
+### Bug Fixes
+
+* **auth:** reject role fields on registration ([f8849b7](https://github.com/Exar-lab/Sistema_Biblioteca/commit/f8849b79e7182d8e1217933171446fd79a1268fb))
+
 ## [0.8.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.7.0...sistema-biblioteca-v0.8.0) (2026-06-05)
 
 
