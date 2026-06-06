@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.application.ports.user_repository import UserRepository
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.application.errors import InactiveUserError
 from app.infrastructure.repositories.user_repository import user_repository
 from app.schemas.users import UserRead
 
@@ -62,6 +63,9 @@ def get_current_user(
     user = repo.get_by_id(db, user_id)
     if user is None:
         raise _unauthorized("User not found.")
+
+    if getattr(user, "is_active", True) is False:
+        raise InactiveUserError()
 
     return UserRead.model_validate(user)
 

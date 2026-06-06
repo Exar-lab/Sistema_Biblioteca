@@ -2,11 +2,11 @@
 
 from typing import Any
 
-from app.application.errors import ConflictError, InactiveUserError, InvalidCredentialsError
+from app.application.errors import ConflictError, InactiveUserError, InvalidCredentialsError, NotFoundError
 from app.application.ports.user_repository import UserRepository
 from app.core.security import create_access_token, hash_password, verify_password
 from app.schemas.auth import LoginResponse
-from app.schemas.users import UserCreate, UserCreateWithHash, UserRead
+from app.schemas.users import UserChangePassword, UserCreate, UserCreateWithHash, UserRead
 
 # Role ID for the default "Usuario" role as seeded in the roles table.
 # Centralized here so registration logic has a single place to update if the seed changes.
@@ -71,6 +71,55 @@ class AuthService:
         if user is None:
             raise RuntimeError("User creation succeeded in Oracle but could not be retrieved.")
         return UserRead.model_validate(user)
+
+    def change_password(self, session: Any, user_id: int, data: UserChangePassword) -> UserRead:
+        """Change the password for the authenticated user."""
+
+        user = self._user_repository.get_by_id(session, user_id)
+        if user is None:
+            raise NotFoundError("User not found.")
+
+        if not verify_password(data.current_password.get_secret_value(), user.password_hash):
+            raise InvalidCredentialsError("Current password is incorrect.")
+
+        payload = _PasswordChangePayload(
+            username=user.username,
+            full_name=user.full_name,
+            email=user.email,
+            phone=user.phone,
+            password_hash=hash_password(data.new_password.get_secret_value()),
+            is_active=user.is_active,
+            role_id=user.role_id,
+        )
+        updated = self._user_repository.update(session, user_id, payload)
+        if updated is None:
+            raise NotFoundError("User not found.")
+        return UserRead.model_validate(updated)
+
+
+class _PasswordChangePayload:
+    """Attribute carrier for repository password updates."""
+
+    __slots__ = ("username", "full_name", "email", "phone", "password_hash", "is_active", "role_id")
+
+    def __init__(
+        self,
+        *,
+        username: str,
+        full_name: str,
+        email: str,
+        phone: str | None,
+        password_hash: str,
+        is_active: bool,
+        role_id: int | None,
+    ) -> None:
+        self.username = username
+        self.full_name = full_name
+        self.email = email
+        self.phone = phone
+        self.password_hash = password_hash
+        self.is_active = is_active
+        self.role_id = role_id
 
 
 __all__ = ["AuthService"]

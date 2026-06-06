@@ -8,6 +8,9 @@ from fastapi.testclient import TestClient
 
 import main
 from app.api import dependencies
+from app.api.v1.routers.auth import get_auth_service
+from app.application.services.auth_service import AuthService
+from app.core.security import hash_password
 from app.core.database import get_db
 
 
@@ -30,6 +33,7 @@ class UserStub:
     is_active: bool = True
     role_id: int = 1
     role: RoleStub | None = None
+    password_hash: str = ""
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -42,6 +46,21 @@ class FakeUserRepository:
         if self.user is not None and self.user.id == id:
             return self.user
         return None
+
+
+class FakePasswordRepository(FakeUserRepository):
+    def update(self, _session: Any, id: int, data: Any) -> UserStub | None:
+        if self.user is None or self.user.id != id:
+            return None
+
+        self.user.username = data.username
+        self.user.full_name = data.full_name
+        self.user.email = data.email
+        self.user.phone = data.phone
+        self.user.is_active = data.is_active
+        self.user.role_id = data.role_id
+        self.user.password_hash = data.password_hash
+        return self.user
 
 
 def _client_with_auth_repo(monkeypatch: Any, payload: dict | None, user: UserStub | None = None) -> TestClient:
@@ -95,3 +114,33 @@ def test_me_returns_current_user_for_valid_token_subject(monkeypatch: Any) -> No
     assert response.status_code == 200
     assert response.json()["username"] == "admin"
     assert response.json()["role"]["name"] == "Admin"
+
+
+def test_me_returns_403_for_inactive_user(monkeypatch: Any) -> None:
+    client = _client_with_auth_repo(monkeypatch, {"sub": "1"}, UserStub(role=RoleStub(), is_active=False))
+    try:
+        response = client.get("/api/v1/auth/me", headers={"Authorization": "Bearer token"})
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "User account is inactive."}
+
+
+def test_change_password_returns_updated_user(monkeypatch: Any) -> None:
+    user = UserStub(role=RoleStub())
+    user.password_hash = hash_password("secret123")
+    repo = FakePasswordRepository(user)
+    client = _client_with_auth_repo(monkeypatch, {"sub": "1"}, user)
+    main.app.dependency_overrides[get_auth_service] = lambda: AuthService(repo)
+    try:
+        response = client.patch(
+            "/api/v1/auth/me/password",
+            headers={"Authorization": "Bearer token"},
+            json={"current_password": "secret123", "new_password": "newsecret123"},
+        )
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["username"] == "admin"
