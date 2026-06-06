@@ -6,7 +6,7 @@ from app.application.errors import ConflictError, InactiveUserError, InvalidCred
 from app.application.ports.user_repository import UserRepository
 from app.core.security import create_access_token, hash_password, verify_password
 from app.schemas.auth import LoginResponse
-from app.schemas.users import UserChangePassword, UserCreate, UserCreateWithHash, UserRead
+from app.schemas.users import UserChangePassword, UserCreateWithHash, UserRead, UserRegister
 
 # Role ID for the default "Usuario" role as seeded in the roles table.
 # Centralized here so registration logic has a single place to update if the seed changes.
@@ -46,7 +46,7 @@ class AuthService:
             user=UserRead.model_validate(user),
         )
 
-    def register(self, session: Any, data: UserCreate) -> UserRead:
+    def register(self, session: Any, data: UserRegister) -> UserRead:
         """Create a new user with a hashed password.
 
         Raises ConflictError if a user with the same username already exists.

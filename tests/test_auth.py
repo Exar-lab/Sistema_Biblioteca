@@ -127,6 +127,21 @@ def test_me_returns_403_for_inactive_user(monkeypatch: Any) -> None:
     assert response.json() == {"detail": "User account is inactive."}
 
 
+def test_register_rejects_public_role_and_active_fields() -> None:
+    payload = {
+        "username": "newuser",
+        "full_name": "New User",
+        "email": "newuser@example.com",
+        "password": "secret1234",
+        "role_id": 1,
+        "is_active": False,
+    }
+
+    response = TestClient(main.app).post("/api/v1/auth/register", json=payload)
+
+    assert response.status_code == 422
+
+
 def test_change_password_returns_updated_user(monkeypatch: Any) -> None:
     user = UserStub(role=RoleStub())
     user.password_hash = hash_password("secret123")
