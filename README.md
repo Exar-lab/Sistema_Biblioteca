@@ -188,7 +188,7 @@ If the database is unavailable, the endpoint returns `503`.
 
 ## 🎨 Frontend
 
-The web UI is a static multi-page frontend served by FastAPI from `/static`.
+The web UI is a static multi-page frontend served by FastAPI from `/` and `/static`.
 
 Folder layout:
 
