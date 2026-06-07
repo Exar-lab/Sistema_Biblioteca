@@ -1,7 +1,7 @@
 """FastAPI entrypoint for the library control system."""
 
 from fastapi import FastAPI, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -38,11 +38,11 @@ app.include_router(users_router, prefix="/api/v1")
 app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 
-@app.get("/", tags=["Health"])
-def read_root() -> dict[str, str]:
-    """Return a basic health response for the application."""
+@app.get("/", include_in_schema=False)
+def read_root() -> FileResponse:
+    """Serve the static frontend entrypoint."""
 
-    return {"message": "Sistema de Control de Biblioteca API"}
+    return FileResponse("app/static/index.html")
 
 
 @app.get("/health", tags=["Health"], response_model=None)
