@@ -133,7 +133,7 @@
     el.innerHTML = `
       <table><thead><tr><th>Libro</th><th>Disponible</th><th>Total</th></tr></thead>
       <tbody>${books.map(b => `<tr>
-        <td style="font-size:0.82rem;">${b.title}</td>
+        <td style="font-size:0.82rem;">${escapeHtml(b.title)}</td>
         <td><span class="badge ${b.stock_available===0?'badge-overdue':'badge-low'}">${b.stock_available}</span></td>
         <td style="font-size:0.82rem;color:var(--text-3)">${b.stock_total}</td>
       </tr>`).join('')}</tbody></table>`;

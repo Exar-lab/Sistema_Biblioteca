@@ -35,7 +35,7 @@
 <script src="../js/sidebar.js"></script>
 <script>
   requireAuth();
-  if (isAdmin()) window.location.href = 'admin-dashboard.html';
+  if (isAdmin()) window.location.href = resolvePageUrl('admin-dashboard.html');
   renderSidebar('mis-prestamos');
 
   let allLoans = [], currentTab = 'active';
@@ -63,8 +63,8 @@
     if (!list.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="ti ti-clock"></i><p>Sin préstamos en esta categoría</p></div></td></tr>'; return; }
     tbody.innerHTML = list.map(l => `
       <tr style="${l.status==='OVERDUE'?'background:var(--danger-light);':''}">
-        <td><strong style="color:var(--text)">${l.book?.title||l.book_id}</strong></td>
-        <td>${l.book?.authors?.map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—'}</td>
+        <td><strong style="color:var(--text)">${escapeHtml(l.book?.title||l.book_id)}</strong></td>
+        <td>${escapeHtml((l.book?.authors || []).map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—')}</td>
         <td>${formatDate(l.loan_date)}</td>
         <td>${formatDate(l.due_date)}</td>
         <td><span class="badge ${statusBadge[l.status]||''}">${statusLabel[l.status]||l.status}</span></td>

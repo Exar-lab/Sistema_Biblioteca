@@ -78,23 +78,33 @@
   let allBooks = [], allCategories = [], allAuthors = [], editingId = null;
 
   async function loadAll() {
-    [allBooks, allCategories, allAuthors] = await Promise.all([
+    const [booksRes, categoriesRes, authorsRes] = await Promise.allSettled([
       apiFetch('/books/'), apiFetch('/categories/'), apiFetch('/authors/')
     ]);
+    if (booksRes.status === 'rejected') throw booksRes.reason;
+    allBooks = booksRes.value;
+    allCategories = categoriesRes.status === 'fulfilled' ? categoriesRes.value : [];
+    allAuthors = authorsRes.status === 'fulfilled' ? authorsRes.value : [];
     populateSelects();
     renderBooks(allBooks);
+    if (categoriesRes.status === 'rejected' || authorsRes.status === 'rejected') {
+      showToast('No se pudieron cargar algunos filtros','warning');
+    }
   }
 
   function populateSelects() {
     const catFilter = document.getElementById('filterCategory');
     const fCat = document.getElementById('fCategory');
     const fAuth = document.getElementById('fAuthors');
+    catFilter.innerHTML = '<option value="">Todas las categorías</option>';
+    fCat.innerHTML = '<option value="">Sin categoría</option>';
+    fAuth.innerHTML = '';
     allCategories.forEach(c => {
-      catFilter.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-      fCat.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      catFilter.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+      fCat.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
     });
     allAuthors.forEach(a => {
-      fAuth.innerHTML += `<option value="${a.id}">${a.first_name} ${a.last_name}</option>`;
+      fAuth.innerHTML += `<option value="${a.id}">${escapeHtml(`${a.first_name} ${a.last_name}`)}</option>`;
     });
   }
 
@@ -119,9 +129,9 @@
     }
     tbody.innerHTML = list.map(b => `
       <tr>
-        <td><strong style="color:var(--text)">${b.title}</strong>${b.isbn ? `<br><span class="text-muted">ISBN: ${b.isbn}</span>` : ''}</td>
-        <td>${b.authors.map(a => `${a.first_name} ${a.last_name}`).join(', ') || '—'}</td>
-        <td>${b.category?.name || '—'}</td>
+        <td><strong style="color:var(--text)">${escapeHtml(b.title)}</strong>${b.isbn ? `<br><span class="text-muted">ISBN: ${escapeHtml(b.isbn)}</span>` : ''}</td>
+        <td>${escapeHtml((b.authors || []).map(a => `${a.first_name} ${a.last_name}`).join(', ') || '—')}</td>
+        <td>${escapeHtml(b.category?.name || '—')}</td>
         <td>
           <span class="${b.stock_available === 0 ? 'badge badge-overdue' : b.stock_available <= 2 ? 'badge badge-low' : ''}">
             ${b.stock_available}/${b.stock_total}
@@ -131,7 +141,7 @@
         <td>
           <div style="display:flex;gap:6px;">
             <button class="btn-icon" title="Editar" onclick="openModal(${b.id})"><i class="ti ti-edit"></i></button>
-            <button class="btn-icon danger" title="Eliminar" onclick="deleteBook(${b.id},'${b.title.replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i></button>
+            <button class="btn-icon danger" title="Eliminar" onclick='deleteBook(${b.id}, ${jsString(b.title)})'><i class="ti ti-trash"></i></button>
           </div>
         </td>
       </tr>`).join('');

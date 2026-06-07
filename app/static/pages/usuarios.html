@@ -79,16 +79,16 @@
       <tr>
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
-            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">${u.full_name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()}</div>
-            <div><strong style="color:var(--text)">${u.full_name}</strong><br><span class="text-muted">@${u.username}</span></div>
+            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">${escapeHtml((u.full_name || u.username || 'U').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</div>
+            <div><strong style="color:var(--text)">${escapeHtml(u.full_name)}</strong><br><span class="text-muted">@${escapeHtml(u.username)}</span></div>
           </div>
         </td>
-        <td>${u.email}</td>
-        <td><span class="badge badge-active" style="${u.role?.name?.toLowerCase()==='admin'?'background:var(--brand-light);color:var(--brand);':''}">${u.role?.name || '—'}</span></td>
+        <td>${escapeHtml(u.email)}</td>
+        <td><span class="badge badge-active" style="${u.role?.name?.toLowerCase()==='admin'?'background:var(--brand-light);color:var(--brand);':''}">${escapeHtml(u.role?.name || '—')}</span></td>
         <td><span class="badge ${u.is_active?'badge-active':'badge-inactive'}">${u.is_active?'Activo':'Inactivo'}</span></td>
         <td>
           <div style="display:flex;gap:6px;">
-            <button class="btn-icon" title="Ver préstamos" onclick="showHistory(${u.id},'${u.full_name}')"><i class="ti ti-clock-hour-3"></i></button>
+            <button class="btn-icon" title="Ver préstamos" onclick='showHistory(${u.id}, ${jsString(u.full_name)})'><i class="ti ti-clock-hour-3"></i></button>
             ${u.id !== me?.id ? `<button class="btn btn-sm ${u.is_active?'btn-danger':'btn-secondary'}" onclick="toggleActive(${u.id},${!u.is_active})">${u.is_active?'Desactivar':'Activar'}</button>` : '<span class="text-muted" style="font-size:0.78rem;">Tú</span>'}
           </div>
         </td>
@@ -118,7 +118,7 @@
       document.getElementById('historyBody').innerHTML = loans.length ? `
         <table><thead><tr><th>Libro</th><th>Préstamo</th><th>Vence</th><th>Estado</th></tr></thead>
         <tbody>${loans.map(l => `<tr>
-          <td>${l.book?.title||l.book_id}</td>
+          <td>${escapeHtml(l.book?.title||l.book_id)}</td>
           <td>${formatDate(l.loan_date)}</td>
           <td>${formatDate(l.due_date)}</td>
           <td><span class="badge ${statusBadge[l.status]||''}">${statusLabel[l.status]||l.status}</span></td>

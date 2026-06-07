@@ -30,7 +30,7 @@ The repository is currently in an **API-first stage**: it exposes JWT authentica
 | Authentication | JWT with `python-jose` and password hashing with `passlib[bcrypt]` |
 | Configuration | `pydantic-settings` |
 | Testing | `pytest` + `TestClient` |
-| Planned frontend | Jinja2 + Bootstrap |
+| Frontend | Static HTML, CSS, and vanilla JavaScript served from `app/static` |
 
 ---
 
@@ -186,21 +186,22 @@ If the database is unavailable, the endpoint returns `503`.
 
 ---
 
-## 🎨 Planned Frontend
+## 🎨 Frontend
 
-The web UI will be implemented with **Jinja2 + Bootstrap** when the team moves into the visual layer.
+The web UI is a static multi-page frontend served by FastAPI from `/static`.
 
-This keeps the project simple and teachable: FastAPI can render server-side templates without adding the complexity of a separate frontend application.
-
-Expected folders:
+Folder layout:
 
 ```text
 app/
-├── templates/ # Jinja2 pages
-└── static/    # CSS, JavaScript, and images
+└── static/
+    ├── index.html
+    ├── css/
+    ├── js/
+    └── pages/
 ```
 
-Planned views include:
+Available views include:
 
 - Login
 - Catalog
@@ -224,7 +225,7 @@ python -m pytest
 ## 🧭 Real Next Steps
 
 - Expand test coverage for business flows.
-- Implement the web interface with Jinja2 + Bootstrap.
+- Smoke-test the static web interface against a running backend.
 - Document seed users or initial data if they are added.
 
 ---

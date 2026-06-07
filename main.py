@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.routers.auth import router as auth_router
@@ -34,6 +35,7 @@ app.include_router(reports_router, prefix="/api/v1")
 app.include_router(returns_router, prefix="/api/v1")
 app.include_router(roles_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
+app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 
 @app.get("/", tags=["Health"])

@@ -47,7 +47,7 @@
 <script src="../js/sidebar.js"></script>
 <script>
   requireAuth();
-  if (isAdmin()) window.location.href = 'admin-dashboard.html';
+  if (isAdmin()) window.location.href = resolvePageUrl('admin-dashboard.html');
   renderSidebar('usuario');
 
   const user = getUser();
@@ -60,7 +60,7 @@
   async function loadLoans() {
     try {
       const me = await apiFetch('/auth/me');
-      const loans = await apiFetch(`/loans/users/${me.id}`);
+      const loans = await apiFetch(`/loans/users/${me.id}`).catch(() => []);
       const active = loans.filter(l => l.status === 'ACTIVE' || l.status === 'OVERDUE');
       const overdue = active.filter(l => l.status === 'OVERDUE');
 
@@ -84,14 +84,14 @@
         const diff = Math.ceil((due - today) / (1000*60*60*24));
         const diffLabel = diff < 0 ? `<span class="text-danger">${Math.abs(diff)} día(s) vencido</span>` : diff === 0 ? '<span class="text-danger">Vence hoy</span>' : `${diff} día(s)`;
         return `<tr style="${l.status==='OVERDUE'?'background:var(--danger-light);':''}">
-          <td><strong style="color:var(--text)">${l.book?.title||'—'}</strong>${l.book?.authors?.length?`<br><span class="text-muted">${l.book.authors.map(a=>a.first_name+' '+a.last_name).join(', ')}</span>`:''}</td>
+          <td><strong style="color:var(--text)">${escapeHtml(l.book?.title||'—')}</strong>${l.book?.authors?.length?`<br><span class="text-muted">${escapeHtml((l.book.authors || []).map(a=>a.first_name+' '+a.last_name).join(', '))}</span>`:''}</td>
           <td>${formatDate(l.loan_date)}</td>
           <td>${formatDate(l.due_date)}</td>
           <td>${diffLabel}</td>
           <td><span class="badge ${l.status==='OVERDUE'?'badge-overdue':'badge-active'}">${l.status==='OVERDUE'?'Vencido':'Activo'}</span></td>
         </tr>`;
       }).join('');
-    } catch(e) { showToast('Error al cargar préstamos','error'); }
+    } catch(e) { showToast('Error al cargar perfil','error'); }
   }
 
   loadLoans();

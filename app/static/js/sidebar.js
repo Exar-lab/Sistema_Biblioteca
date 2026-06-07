@@ -1,7 +1,8 @@
 function renderSidebar(activePage) {
   const user = getUser();
   const admin = isAdmin();
-  const initials = user ? user.full_name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase() : '??';
+  const name = user?.full_name || 'Usuario';
+  const initials = name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '??';
 
   const adminLinks = admin ? `
     <p class="nav-section-label">Administración</p>
@@ -46,10 +47,10 @@ function renderSidebar(activePage) {
         <span>Sistema de control</span>
       </div>
       <div class="sidebar-user">
-        <div class="avatar">${initials}</div>
+        <div class="avatar">${escapeHtml(initials)}</div>
         <div class="sidebar-user-info">
-          <p>${user?.full_name || 'Usuario'}</p>
-          <span>${user?.role?.name || ''}</span>
+          <p>${escapeHtml(name)}</p>
+          <span>${escapeHtml(user?.role?.name || '')}</span>
         </div>
       </div>
       <nav class="sidebar-nav">${adminLinks}</nav>
@@ -64,7 +65,7 @@ function renderSidebar(activePage) {
 
 function doLogout() {
   clearSession();
-  window.location.href = '../index.html';
+  redirectToLogin();
 }
 
 function confirm(title, msg, onConfirm) {
@@ -72,13 +73,16 @@ function confirm(title, msg, onConfirm) {
   d.className = 'confirm-dialog';
   d.innerHTML = `
     <div class="confirm-box">
-      <h3>${title}</h3>
-      <p>${msg}</p>
+      <h3></h3>
+      <p></p>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.confirm-dialog').remove()">Cancelar</button>
-        <button class="btn btn-danger" id="confirmOk">Confirmar</button>
+        <button class="btn btn-secondary" type="button">Cancelar</button>
+        <button class="btn btn-danger" id="confirmOk" type="button">Confirmar</button>
       </div>
     </div>`;
+  d.querySelector('h3').textContent = title;
+  d.querySelector('p').textContent = msg;
   document.body.appendChild(d);
+  d.querySelector('.btn-secondary').onclick = () => d.remove();
   d.querySelector('#confirmOk').onclick = () => { d.remove(); onConfirm(); };
 }
