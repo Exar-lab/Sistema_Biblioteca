@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.9.0...sistema-biblioteca-v0.10.0) (2026-06-07)
+
+
+### Features
+
+* agregar frontend completo del sistema de biblioteca ([bdac8f8](https://github.com/Exar-lab/Sistema_Biblioteca/commit/bdac8f8ba47cdbb2eb54e73e17b76bffcd841b96))
+
 ## [0.9.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.8.0...sistema-biblioteca-v0.9.0) (2026-06-06)
 
 
