@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Autores — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Autores</span>
+      <button class="btn btn-primary btn-sm" onclick="openModal()"><i class="ti ti-plus"></i> Nuevo autor</button>
+    </header>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i class="ti ti-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar por nombre…" oninput="filterList()"/>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Fecha nac.</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="listBody"><tr><td colspan="4" class="loading">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo autor</span>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre *</label><input id="fFirst" placeholder="Nombre"/></div>
+      <div class="form-group"><label>Apellido *</label><input id="fLast" placeholder="Apellido"/></div>
+      <div class="form-group"><label>Fecha nacimiento</label><input id="fBirth" type="date"/></div>
+      <div class="form-group"><label>Fecha fallecimiento</label><input id="fDeath" type="date"/></div>
+      <div class="form-group form-full"><label>Biografía</label><textarea id="fBio" placeholder="Breve biografía…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveItem()"><i class="ti ti-device-floppy"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAdmin();
+  renderSidebar('autores');
+  let allItems = [], editingId = null;
+
+  async function loadAll() {
+    allItems = await apiFetch('/authors/');
+    renderList(allItems);
+  }
+
+  function filterList() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    renderList(allItems.filter(a => `${a.first_name} ${a.last_name}`.toLowerCase().includes(q)));
+  }
+
+  function renderList(list) {
+    const tbody = document.getElementById('listBody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="ti ti-user-circle"></i><p>No hay autores</p></div></td></tr>'; return; }
+    tbody.innerHTML = list.map(a => `
+      <tr>
+        <td><strong style="color:var(--text)">${a.first_name} ${a.last_name}</strong>${a.biography ? `<br><span class="text-muted" style="max-width:400px;display:inline-block;">${a.biography.slice(0,80)}${a.biography.length>80?'…':''}</span>` : ''}</td>
+        <td>${formatDate(a.birth_date)}</td>
+        <td><span class="badge ${a.is_active ? 'badge-active':'badge-inactive'}">${a.is_active?'Activo':'Inactivo'}</span></td>
+        <td><div style="display:flex;gap:6px;">
+          <button class="btn-icon" onclick="openModal(${a.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn-icon danger" onclick="deleteItem(${a.id},'${a.first_name} ${a.last_name}')"><i class="ti ti-trash"></i></button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    ['fFirst','fLast','fBirth','fDeath','fBio'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('modalTitle').textContent = id ? 'Editar autor' : 'Nuevo autor';
+    if (id) {
+      const a = allItems.find(x => x.id === id);
+      document.getElementById('fFirst').value = a.first_name;
+      document.getElementById('fLast').value = a.last_name;
+      document.getElementById('fBirth').value = a.birth_date || '';
+      document.getElementById('fDeath').value = a.death_date || '';
+      document.getElementById('fBio').value = a.biography || '';
+    }
+    document.getElementById('itemModal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('itemModal').classList.remove('open'); }
+
+  async function saveItem() {
+    const first = document.getElementById('fFirst').value.trim();
+    const last  = document.getElementById('fLast').value.trim();
+    if (!first || !last) { showToast('Nombre y apellido son obligatorios','warning'); return; }
+    const payload = { first_name: first, last_name: last, birth_date: document.getElementById('fBirth').value || null, death_date: document.getElementById('fDeath').value || null, biography: document.getElementById('fBio').value.trim() || null, is_active: true };
+    try {
+      if (editingId) { await apiFetch(`/authors/${editingId}`, { method:'PATCH', body: JSON.stringify(payload) }); showToast('Autor actualizado'); }
+      else { await apiFetch('/authors/', { method:'POST', body: JSON.stringify(payload) }); showToast('Autor creado'); }
+      closeModal();
+      allItems = await apiFetch('/authors/');
+      renderList(allItems);
+    } catch(e) { showToast(e.detail||'Error','error'); }
+  }
+
+  function deleteItem(id, name) {
+    confirm('Eliminar autor', `¿Eliminar a "${name}"?`, async () => {
+      try { await apiFetch(`/authors/${id}`, { method:'DELETE' }); showToast('Autor eliminado'); allItems = await apiFetch('/authors/'); renderList(allItems); }
+      catch(e) { showToast(e.detail||'Error al eliminar','error'); }
+    });
+  }
+
+  loadAll().catch(() => showToast('Error al cargar','error'));
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Libros — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Libros</span>
+      <button class="btn btn-primary btn-sm" onclick="openModal()"><i class="ti ti-plus"></i> Nuevo libro</button>
+    </header>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <input type="text" id="searchTitle" placeholder="Buscar por título…" oninput="filterBooks()" />
+        </div>
+        <select id="filterCategory" onchange="filterBooks()" style="width:180px;">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select id="filterStock" onchange="filterBooks()" style="width:160px;">
+          <option value="">Todo el stock</option>
+          <option value="low">Stock bajo (≤2)</option>
+          <option value="none">Sin stock</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Título</th><th>Autores</th><th>Categoría</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="booksBody"><tr><td colspan="6" class="loading">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal libro -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo libro</span>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Título *</label><input id="fTitle" type="text" placeholder="Título del libro"/></div>
+      <div class="form-group"><label>ISBN</label><input id="fIsbn" type="text" placeholder="978-…"/></div>
+      <div class="form-group"><label>Editorial</label><input id="fPublisher" type="text"/></div>
+      <div class="form-group"><label>Edición</label><input id="fEdition" type="text"/></div>
+      <div class="form-group"><label>Páginas</label><input id="fPages" type="number" min="1"/></div>
+      <div class="form-group"><label>Fecha publicación</label><input id="fPubDate" type="date"/></div>
+      <div class="form-group"><label>Stock total</label><input id="fStock" type="number" min="0" value="0"/></div>
+      <div class="form-group"><label>Categoría</label><select id="fCategory"><option value="">Sin categoría</option></select></div>
+      <div class="form-group form-full"><label>Autores</label><select id="fAuthors" multiple style="height:90px;"></select><span class="text-muted" style="margin-top:4px;">Ctrl+clic para seleccionar varios</span></div>
+      <div class="form-group form-full"><label>Descripción</label><textarea id="fDesc" placeholder="Resumen del libro…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBook()"><i class="ti ti-device-floppy"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAdmin();
+  renderSidebar('libros');
+
+  let allBooks = [], allCategories = [], allAuthors = [], editingId = null;
+
+  async function loadAll() {
+    [allBooks, allCategories, allAuthors] = await Promise.all([
+      apiFetch('/books/'), apiFetch('/categories/'), apiFetch('/authors/')
+    ]);
+    populateSelects();
+    renderBooks(allBooks);
+  }
+
+  function populateSelects() {
+    const catFilter = document.getElementById('filterCategory');
+    const fCat = document.getElementById('fCategory');
+    const fAuth = document.getElementById('fAuthors');
+    allCategories.forEach(c => {
+      catFilter.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      fCat.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    });
+    allAuthors.forEach(a => {
+      fAuth.innerHTML += `<option value="${a.id}">${a.first_name} ${a.last_name}</option>`;
+    });
+  }
+
+  function filterBooks() {
+    const title = document.getElementById('searchTitle').value.toLowerCase();
+    const catId = document.getElementById('filterCategory').value;
+    const stock = document.getElementById('filterStock').value;
+    let list = allBooks.filter(b => {
+      const matchTitle = b.title.toLowerCase().includes(title);
+      const matchCat = !catId || String(b.category?.id) === catId;
+      const matchStock = !stock || (stock === 'low' && b.stock_available <= 2 && b.stock_available > 0) || (stock === 'none' && b.stock_available === 0);
+      return matchTitle && matchCat && matchStock;
+    });
+    renderBooks(list);
+  }
+
+  function renderBooks(list) {
+    const tbody = document.getElementById('booksBody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="ti ti-books"></i><p>No se encontraron libros</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(b => `
+      <tr>
+        <td><strong style="color:var(--text)">${b.title}</strong>${b.isbn ? `<br><span class="text-muted">ISBN: ${b.isbn}</span>` : ''}</td>
+        <td>${b.authors.map(a => `${a.first_name} ${a.last_name}`).join(', ') || '—'}</td>
+        <td>${b.category?.name || '—'}</td>
+        <td>
+          <span class="${b.stock_available === 0 ? 'badge badge-overdue' : b.stock_available <= 2 ? 'badge badge-low' : ''}">
+            ${b.stock_available}/${b.stock_total}
+          </span>
+        </td>
+        <td><span class="badge ${b.is_active ? 'badge-active' : 'badge-inactive'}">${b.is_active ? 'Activo' : 'Inactivo'}</span></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-icon" title="Editar" onclick="openModal(${b.id})"><i class="ti ti-edit"></i></button>
+            <button class="btn-icon danger" title="Eliminar" onclick="deleteBook(${b.id},'${b.title.replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    clearForm();
+    document.getElementById('modalTitle').textContent = id ? 'Editar libro' : 'Nuevo libro';
+    if (id) {
+      const b = allBooks.find(x => x.id === id);
+      document.getElementById('fTitle').value = b.title;
+      document.getElementById('fIsbn').value = b.isbn || '';
+      document.getElementById('fPublisher').value = b.publisher || '';
+      document.getElementById('fEdition').value = b.edition || '';
+      document.getElementById('fPages').value = b.pages || '';
+      document.getElementById('fPubDate').value = b.publication_date || '';
+      document.getElementById('fStock').value = b.stock_total;
+      document.getElementById('fDesc').value = b.description || '';
+      if (b.category) document.getElementById('fCategory').value = b.category.id;
+      const authorIds = b.authors.map(a => String(a.id));
+      Array.from(document.getElementById('fAuthors').options).forEach(o => { o.selected = authorIds.includes(o.value); });
+    }
+    document.getElementById('bookModal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('bookModal').classList.remove('open'); }
+
+  function clearForm() {
+    ['fTitle','fIsbn','fPublisher','fEdition','fDesc'].forEach(id => document.getElementById(id).value = '');
+    ['fPages','fPubDate'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fStock').value = '0';
+    document.getElementById('fCategory').value = '';
+    Array.from(document.getElementById('fAuthors').options).forEach(o => o.selected = false);
+  }
+
+  async function saveBook() {
+    const title = document.getElementById('fTitle').value.trim();
+    if (!title) { showToast('El título es obligatorio', 'warning'); return; }
+    const payload = {
+      title,
+      isbn: document.getElementById('fIsbn').value.trim() || null,
+      publisher: document.getElementById('fPublisher').value.trim() || null,
+      edition: document.getElementById('fEdition').value.trim() || null,
+      pages: parseInt(document.getElementById('fPages').value) || null,
+      publication_date: document.getElementById('fPubDate').value || null,
+      stock_total: parseInt(document.getElementById('fStock').value) || 0,
+      description: document.getElementById('fDesc').value.trim() || null,
+      category_id: parseInt(document.getElementById('fCategory').value) || null,
+      author_ids: Array.from(document.getElementById('fAuthors').selectedOptions).map(o => parseInt(o.value)),
+      is_active: true
+    };
+    try {
+      if (editingId) {
+        await apiFetch(`/books/${editingId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        showToast('Libro actualizado');
+      } else {
+        await apiFetch('/books/', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('Libro creado');
+      }
+      closeModal();
+      allBooks = await apiFetch('/books/');
+      renderBooks(allBooks);
+    } catch (e) { showToast(e.detail || 'Error al guardar', 'error'); }
+  }
+
+  function deleteBook(id, title) {
+    confirm('Eliminar libro', `¿Eliminar "${title}"? Esta acción no se puede deshacer.`, async () => {
+      try {
+        await apiFetch(`/books/${id}`, { method: 'DELETE' });
+        showToast('Libro eliminado');
+        allBooks = await apiFetch('/books/');
+        renderBooks(allBooks);
+      } catch (e) { showToast(e.detail || 'Error al eliminar', 'error'); }
+    });
+  }
+
+  loadAll().catch(() => showToast('Error al cargar', 'error'));
+</script>
+</body>
+</html>

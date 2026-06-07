@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mi cuenta — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Mi cuenta</span>
+    </header>
+    <div class="content">
+      <div id="alertOverdue"></div>
+
+      <!-- Perfil -->
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="avatar" id="userAvatar" style="width:52px;height:52px;font-size:1rem;">?</div>
+          <div>
+            <div style="font-size:1.1rem;font-weight:500;" id="userName">—</div>
+            <div class="text-muted" id="userEmail">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Préstamos activos -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">Mis préstamos activos</span>
+          <a href="catalogo.html" class="btn btn-primary btn-sm"><i class="ti ti-books"></i> Ver catálogo</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Libro</th><th>Fecha préstamo</th><th>Vence</th><th>Días restantes</th><th>Estado</th></tr></thead>
+            <tbody id="activeLoansBody"><tr><td colspan="5" class="loading">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAuth();
+  if (isAdmin()) window.location.href = 'admin-dashboard.html';
+  renderSidebar('usuario');
+
+  const user = getUser();
+  if (user) {
+    document.getElementById('userName').textContent = user.full_name;
+    document.getElementById('userEmail').textContent = user.email;
+    document.getElementById('userAvatar').textContent = user.full_name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  }
+
+  async function loadLoans() {
+    try {
+      const me = await apiFetch('/auth/me');
+      const loans = await apiFetch(`/loans/users/${me.id}`);
+      const active = loans.filter(l => l.status === 'ACTIVE' || l.status === 'OVERDUE');
+      const overdue = active.filter(l => l.status === 'OVERDUE');
+
+      if (overdue.length) {
+        document.getElementById('alertOverdue').innerHTML = `
+          <div style="background:var(--danger-light);border:1px solid #f5c6c2;border-radius:var(--radius);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+            <i class="ti ti-alert-triangle" style="color:var(--danger);font-size:20px;" aria-hidden="true"></i>
+            <span style="color:var(--danger);font-size:0.875rem;"><strong>Atención:</strong> Tienes ${overdue.length} préstamo(s) vencido(s). Devuélvelos para solicitar nuevos préstamos.</span>
+          </div>`;
+      }
+
+      const tbody = document.getElementById('activeLoansBody');
+      if (!active.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="ti ti-circle-check"></i><p>Sin préstamos activos</p></div></td></tr>';
+        return;
+      }
+
+      const today = new Date();
+      tbody.innerHTML = active.map(l => {
+        const due = new Date(l.due_date);
+        const diff = Math.ceil((due - today) / (1000*60*60*24));
+        const diffLabel = diff < 0 ? `<span class="text-danger">${Math.abs(diff)} día(s) vencido</span>` : diff === 0 ? '<span class="text-danger">Vence hoy</span>' : `${diff} día(s)`;
+        return `<tr style="${l.status==='OVERDUE'?'background:var(--danger-light);':''}">
+          <td><strong style="color:var(--text)">${l.book?.title||'—'}</strong>${l.book?.authors?.length?`<br><span class="text-muted">${l.book.authors.map(a=>a.first_name+' '+a.last_name).join(', ')}</span>`:''}</td>
+          <td>${formatDate(l.loan_date)}</td>
+          <td>${formatDate(l.due_date)}</td>
+          <td>${diffLabel}</td>
+          <td><span class="badge ${l.status==='OVERDUE'?'badge-overdue':'badge-active'}">${l.status==='OVERDUE'?'Vencido':'Activo'}</span></td>
+        </tr>`;
+      }).join('');
+    } catch(e) { showToast('Error al cargar préstamos','error'); }
+  }
+
+  loadLoans();
+</script>
+</body>
+</html>

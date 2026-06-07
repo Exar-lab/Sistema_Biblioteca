@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Reportes — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Reportes</span>
+      <button class="btn btn-secondary btn-sm" onclick="loadData()"><i class="ti ti-refresh"></i> Actualizar</button>
+    </header>
+    <div class="content">
+      <!-- Stats rápidas -->
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- Gráfico 1 + 2 -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3><i class="ti ti-trophy" aria-hidden="true"></i> Top 5 libros más prestados</h3>
+          <div class="chart-canvas-wrap"><canvas id="chartTopBooks"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="ti ti-chart-line" aria-hidden="true"></i> Préstamos por mes</h3>
+          <div class="chart-canvas-wrap"><canvas id="chartMonthly"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="ti ti-users" aria-hidden="true"></i> Usuarios con más préstamos</h3>
+          <div class="chart-canvas-wrap"><canvas id="chartTopUsers"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="ti ti-alert-triangle" aria-hidden="true"></i> Libros con stock bajo</h3>
+          <div id="lowStockList" class="chart-canvas-wrap" style="overflow-y:auto;height:220px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAdmin();
+  renderSidebar('reportes');
+
+  const BRAND = '#1a6b4a';
+  const ACCENT = '#c8773a';
+  const PALETTE = ['#1a6b4a','#2e8c63','#3fa87a','#5abf8e','#7dd0a5'];
+  let charts = {};
+
+  function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+  function baseOpts(horizontal = false) {
+    return {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: !horizontal, color:'#f0eeea' }, ticks: { font:{ family:'DM Sans', size:11 } } },
+        y: { grid: { display: horizontal, color:'#f0eeea' }, ticks: { font:{ family:'DM Sans', size:11 }, precision:0 } }
+      }
+    };
+  }
+
+  async function loadData() {
+    document.getElementById('statsGrid').innerHTML = '<div class="loading">Cargando…</div>';
+    try {
+      const d = await apiFetch('/reports/dashboard');
+      renderStats(d.summary);
+      renderTopBooks(d.top_books);
+      renderMonthly(d.loans_by_month);
+      renderTopUsers(d.top_users);
+      renderLowStock(d.low_stock_books);
+    } catch(e) { showToast('Error al cargar reportes','error'); }
+  }
+
+  function renderStats(s) {
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><span class="stat-label">Total libros</span><div class="stat-value">${s.total_books}</div><i class="ti ti-books stat-icon"></i></div>
+      <div class="stat-card"><span class="stat-label">Total usuarios</span><div class="stat-value">${s.total_users}</div><i class="ti ti-users stat-icon"></i></div>
+      <div class="stat-card accent"><span class="stat-label">Préstamos activos</span><div class="stat-value">${s.active_loans}</div><i class="ti ti-clock stat-icon"></i></div>
+      <div class="stat-card warning"><span class="stat-label">Pendientes devolución</span><div class="stat-value">${s.pending_returns}</div><i class="ti ti-hourglass stat-icon"></i></div>
+      <div class="stat-card danger"><span class="stat-label">Vencidos</span><div class="stat-value">${s.overdue_loans}</div><i class="ti ti-alert-circle stat-icon"></i></div>
+      <div class="stat-card warning"><span class="stat-label">Stock bajo</span><div class="stat-value">${s.low_stock_books}</div><i class="ti ti-package stat-icon"></i></div>
+    `;
+  }
+
+  function renderTopBooks(books) {
+    destroyChart('topBooks');
+    if (!books.length) return;
+    charts['topBooks'] = new Chart(document.getElementById('chartTopBooks'), {
+      type: 'bar',
+      data: {
+        labels: books.map(b => b.title.length > 22 ? b.title.slice(0,20)+'…' : b.title),
+        datasets: [{ data: books.map(b => b.total_loans), backgroundColor: PALETTE, borderRadius: 5 }]
+      },
+      options: baseOpts()
+    });
+  }
+
+  function renderMonthly(items) {
+    destroyChart('monthly');
+    if (!items.length) return;
+    charts['monthly'] = new Chart(document.getElementById('chartMonthly'), {
+      type: 'line',
+      data: {
+        labels: items.map(i => { const d = new Date(i.month); return d.toLocaleDateString('es-CR',{month:'short',year:'2-digit'}); }),
+        datasets: [{ data: items.map(i => i.total_loans), borderColor: BRAND, backgroundColor: 'rgba(26,107,74,0.07)', tension: 0.4, fill: true, pointBackgroundColor: BRAND, pointRadius: 4, pointHoverRadius: 6 }]
+      },
+      options: baseOpts()
+    });
+  }
+
+  function renderTopUsers(users) {
+    destroyChart('topUsers');
+    if (!users.length) return;
+    charts['topUsers'] = new Chart(document.getElementById('chartTopUsers'), {
+      type: 'bar',
+      data: {
+        labels: users.map(u => u.username),
+        datasets: [{ data: users.map(u => u.total_loans), backgroundColor: ACCENT, borderRadius: 5 }]
+      },
+      options: { ...baseOpts(true), indexAxis: 'y' }
+    });
+  }
+
+  function renderLowStock(books) {
+    const el = document.getElementById('lowStockList');
+    if (!books.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-circle-check"></i><p>Todo el stock está bien</p></div>'; return; }
+    el.innerHTML = `
+      <table><thead><tr><th>Libro</th><th>Disponible</th><th>Total</th></tr></thead>
+      <tbody>${books.map(b => `<tr>
+        <td style="font-size:0.82rem;">${b.title}</td>
+        <td><span class="badge ${b.stock_available===0?'badge-overdue':'badge-low'}">${b.stock_available}</span></td>
+        <td style="font-size:0.82rem;color:var(--text-3)">${b.stock_total}</td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+
+  loadData();
+</script>
+</body>
+</html>

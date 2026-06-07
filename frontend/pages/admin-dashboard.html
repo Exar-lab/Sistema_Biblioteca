@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Dashboard</span>
+      <span class="topbar-badge" id="roleBadge"></span>
+    </header>
+    <div class="content">
+      <div class="stats-grid" id="statsGrid">
+        <div class="loading"><i class="ti ti-loader"></i> Cargando…</div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3><i class="ti ti-books" aria-hidden="true"></i> Libros más prestados</h3>
+          <div class="chart-canvas-wrap"><canvas id="chartTopBooks"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="ti ti-chart-line" aria-hidden="true"></i> Préstamos por mes</h3>
+          <div class="chart-canvas-wrap"><canvas id="chartMonthly"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="ti ti-users" aria-hidden="true"></i> Usuarios más activos</h3>
+          <div class="chart-canvas-wrap"><canvas id="chartTopUsers"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3><i class="ti ti-alert-triangle" aria-hidden="true"></i> Stock bajo</h3>
+          <div id="lowStockList" class="chart-canvas-wrap" style="overflow-y:auto;height:220px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAdmin();
+  renderSidebar('dashboard');
+  document.getElementById('roleBadge').textContent = getUser()?.role?.name || 'Admin';
+
+  const BRAND = '#1a6b4a', ACCENT = '#c8773a', WARN = '#d97706';
+  const GREENS = ['#1a6b4a','#2e8c63','#3fa87a','#5abf8e','#7dd0a5','#a0dfc0','#c8f0db'];
+
+  async function loadDashboard() {
+    const data = await apiFetch('/reports/dashboard');
+    renderStats(data.summary);
+    renderTopBooks(data.top_books);
+    renderMonthly(data.loans_by_month);
+    renderTopUsers(data.top_users);
+    renderLowStock(data.low_stock_books);
+  }
+
+  function renderStats(s) {
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><span class="stat-label">Libros</span><div class="stat-value">${s.total_books}</div><i class="ti ti-books stat-icon" aria-hidden="true"></i></div>
+      <div class="stat-card"><span class="stat-label">Usuarios</span><div class="stat-value">${s.total_users}</div><i class="ti ti-users stat-icon" aria-hidden="true"></i></div>
+      <div class="stat-card accent"><span class="stat-label">Préstamos activos</span><div class="stat-value">${s.active_loans}</div><i class="ti ti-clock stat-icon" aria-hidden="true"></i></div>
+      <div class="stat-card warning"><span class="stat-label">Pendientes</span><div class="stat-value">${s.pending_returns}</div><i class="ti ti-hourglass stat-icon" aria-hidden="true"></i></div>
+      <div class="stat-card danger"><span class="stat-label">Vencidos</span><div class="stat-value">${s.overdue_loans}</div><i class="ti ti-alert-triangle stat-icon" aria-hidden="true"></i></div>
+      <div class="stat-card warning"><span class="stat-label">Stock bajo</span><div class="stat-value">${s.low_stock_books}</div><i class="ti ti-package stat-icon" aria-hidden="true"></i></div>
+    `;
+  }
+
+  function chartOpts(title) {
+    return { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'DM Sans' } } }, scales: { x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 11 } } }, y: { grid: { color: '#f0eeea' }, ticks: { font: { family: 'DM Sans', size: 11 }, precision: 0 } } } };
+  }
+
+  function renderTopBooks(books) {
+    if (!books.length) return;
+    new Chart(document.getElementById('chartTopBooks'), {
+      type: 'bar',
+      data: { labels: books.map(b => b.title.length > 20 ? b.title.slice(0,18)+'…' : b.title), datasets: [{ data: books.map(b => b.total_loans), backgroundColor: GREENS.slice(0, books.length), borderRadius: 4 }] },
+      options: { ...chartOpts(), plugins: { legend: { display: false } } }
+    });
+  }
+
+  function renderMonthly(items) {
+    if (!items.length) return;
+    const labels = items.map(i => { const d = new Date(i.month); return d.toLocaleDateString('es-CR', { month: 'short', year: '2-digit' }); });
+    new Chart(document.getElementById('chartMonthly'), {
+      type: 'line',
+      data: { labels, datasets: [{ data: items.map(i => i.total_loans), borderColor: BRAND, backgroundColor: 'rgba(26,107,74,0.08)', tension: 0.4, fill: true, pointBackgroundColor: BRAND, pointRadius: 4 }] },
+      options: chartOpts()
+    });
+  }
+
+  function renderTopUsers(users) {
+    if (!users.length) return;
+    new Chart(document.getElementById('chartTopUsers'), {
+      type: 'bar',
+      data: { labels: users.map(u => u.username), datasets: [{ data: users.map(u => u.total_loans), backgroundColor: ACCENT, borderRadius: 4 }] },
+      options: { ...chartOpts(), indexAxis: 'y' }
+    });
+  }
+
+  function renderLowStock(books) {
+    const el = document.getElementById('lowStockList');
+    if (!books.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-circle-check"></i><p>Sin libros con stock bajo</p></div>'; return; }
+    el.innerHTML = books.map(b => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.85rem;">${b.title}</span>
+        <span class="badge badge-low">${b.stock_available}/${b.stock_total}</span>
+      </div>`).join('');
+  }
+
+  loadDashboard().catch(() => showToast('Error al cargar el dashboard','error'));
+</script>
+</body>
+</html>

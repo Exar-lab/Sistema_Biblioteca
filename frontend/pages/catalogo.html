@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Catálogo — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Catálogo de libros</span>
+    </header>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-wrap" style="flex:2;">
+          <i class="ti ti-search"></i>
+          <input type="text" id="searchTitle" placeholder="Buscar por título…" oninput="filterBooks()"/>
+        </div>
+        <select id="filterCategory" onchange="filterBooks()" style="width:180px;">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select id="filterAvail" onchange="filterBooks()" style="width:160px;">
+          <option value="">Todos</option>
+          <option value="available">Disponibles</option>
+        </select>
+      </div>
+
+      <div id="bookGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
+        <div class="loading" style="grid-column:1/-1;">Cargando catálogo…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal detalle libro -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="bookModalTitle">—</span>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="bookModalBody"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cerrar</button></div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAuth();
+  renderSidebar('catalogo');
+
+  let allBooks = [], allCategories = [];
+
+  async function loadAll() {
+    [allBooks, allCategories] = await Promise.all([apiFetch('/books/'), apiFetch('/categories/')]);
+    const sel = document.getElementById('filterCategory');
+    allCategories.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+    renderBooks(allBooks);
+  }
+
+  function filterBooks() {
+    const title = document.getElementById('searchTitle').value.toLowerCase();
+    const catId = document.getElementById('filterCategory').value;
+    const avail = document.getElementById('filterAvail').value;
+    renderBooks(allBooks.filter(b => {
+      const mT = b.title.toLowerCase().includes(title);
+      const mC = !catId || String(b.category?.id) === catId;
+      const mA = !avail || b.stock_available > 0;
+      return mT && mC && mA && b.is_active;
+    }));
+  }
+
+  function renderBooks(list) {
+    const grid = document.getElementById('bookGrid');
+    if (!list.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-books"></i><p>No se encontraron libros</p></div>'; return; }
+    grid.innerHTML = list.map(b => `
+      <div class="card" style="cursor:pointer;transition:box-shadow 0.15s;" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'" onmouseleave="this.style.boxShadow=''" onclick="showDetail(${b.id})">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
+          <div style="width:44px;height:56px;background:var(--brand-light);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="ti ti-book" style="font-size:22px;color:var(--brand);" aria-hidden="true"></i>
+          </div>
+          <span class="badge ${b.stock_available>0?'badge-active':'badge-inactive'}" style="flex-shrink:0;">${b.stock_available>0?`${b.stock_available} disp.`:'Sin stock'}</span>
+        </div>
+        <div style="font-weight:500;color:var(--text);font-size:0.9rem;line-height:1.3;margin-bottom:6px;">${b.title}</div>
+        <div class="text-muted" style="font-size:0.78rem;margin-bottom:4px;">${b.authors.map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—'}</div>
+        ${b.category ? `<span class="badge badge-returned" style="font-size:0.7rem;">${b.category.name}</span>` : ''}
+      </div>`).join('');
+  }
+
+  function showDetail(id) {
+    const b = allBooks.find(x => x.id === id);
+    document.getElementById('bookModalTitle').textContent = b.title;
+    document.getElementById('bookModalBody').innerHTML = `
+      <table style="width:100%;font-size:0.875rem;margin-bottom:12px;">
+        <tr><td style="color:var(--text-3);padding:6px 0;width:130px;">Autores</td><td>${b.authors.map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Categoría</td><td>${b.category?.name||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Editorial</td><td>${b.publisher||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Edición</td><td>${b.edition||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">ISBN</td><td>${b.isbn||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Páginas</td><td>${b.pages||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Publicación</td><td>${formatDate(b.publication_date)}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Disponibles</td><td><strong>${b.stock_available}</strong> de ${b.stock_total}</td></tr>
+      </table>
+      ${b.description ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;font-size:0.85rem;color:var(--text-2);line-height:1.6;">${b.description}</div>` : ''}
+      ${b.stock_available === 0 ? '<div style="margin-top:12px;padding:10px 14px;background:var(--danger-light);border-radius:var(--radius-sm);color:var(--danger);font-size:0.82rem;">Este libro no está disponible actualmente.</div>' : ''}
+    `;
+    document.getElementById('bookModal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('bookModal').classList.remove('open'); }
+
+  loadAll().catch(() => showToast('Error al cargar catálogo','error'));
+</script>
+</body>
+</html>

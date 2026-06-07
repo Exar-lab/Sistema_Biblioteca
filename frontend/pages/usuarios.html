@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Usuarios — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Usuarios</span>
+    </header>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <i class="ti ti-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar usuario…" oninput="filterList()"/>
+        </div>
+        <select id="filterStatus" onchange="filterList()" style="width:160px;">
+          <option value="">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="listBody"><tr><td colspan="5" class="loading">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal historial de préstamos -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <span class="modal-title" id="historyTitle">Historial de préstamos</span>
+      <button class="modal-close" onclick="closeHistory()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="table-wrap" id="historyBody" style="max-height:360px;overflow-y:auto;"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeHistory()">Cerrar</button></div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAdmin();
+  renderSidebar('usuarios');
+  let allItems = [];
+
+  async function loadAll() {
+    allItems = await apiFetch('/users/');
+    renderList(allItems);
+  }
+
+  function filterList() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const st = document.getElementById('filterStatus').value;
+    renderList(allItems.filter(u => {
+      const matchQ = u.full_name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      const matchSt = !st || (st==='active' && u.is_active) || (st==='inactive' && !u.is_active);
+      return matchQ && matchSt;
+    }));
+  }
+
+  function renderList(list) {
+    const tbody = document.getElementById('listBody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="ti ti-users"></i><p>No hay usuarios</p></div></td></tr>'; return; }
+    const me = getUser();
+    tbody.innerHTML = list.map(u => `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;">${u.full_name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()}</div>
+            <div><strong style="color:var(--text)">${u.full_name}</strong><br><span class="text-muted">@${u.username}</span></div>
+          </div>
+        </td>
+        <td>${u.email}</td>
+        <td><span class="badge badge-active" style="${u.role?.name?.toLowerCase()==='admin'?'background:var(--brand-light);color:var(--brand);':''}">${u.role?.name || '—'}</span></td>
+        <td><span class="badge ${u.is_active?'badge-active':'badge-inactive'}">${u.is_active?'Activo':'Inactivo'}</span></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-icon" title="Ver préstamos" onclick="showHistory(${u.id},'${u.full_name}')"><i class="ti ti-clock-hour-3"></i></button>
+            ${u.id !== me?.id ? `<button class="btn btn-sm ${u.is_active?'btn-danger':'btn-secondary'}" onclick="toggleActive(${u.id},${!u.is_active})">${u.is_active?'Desactivar':'Activar'}</button>` : '<span class="text-muted" style="font-size:0.78rem;">Tú</span>'}
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function toggleActive(id, activate) {
+    const label = activate ? 'activar' : 'desactivar';
+    confirm(`${activate?'Activar':'Desactivar'} usuario`, `¿Deseas ${label} este usuario?`, async () => {
+      try {
+        await apiFetch(`/users/${id}/active`, { method:'PATCH', body: JSON.stringify({ is_active: activate }) });
+        showToast(`Usuario ${activate?'activado':'desactivado'}`);
+        allItems = await apiFetch('/users/');
+        renderList(allItems);
+      } catch(e) { showToast(e.detail||'Error','error'); }
+    });
+  }
+
+  async function showHistory(userId, name) {
+    document.getElementById('historyTitle').textContent = `Préstamos de ${name}`;
+    document.getElementById('historyBody').innerHTML = '<div class="loading">Cargando…</div>';
+    document.getElementById('historyModal').classList.add('open');
+    try {
+      const loans = await apiFetch(`/loans/users/${userId}`);
+      const statusLabel = { ACTIVE:'Activo', OVERDUE:'Vencido', RETURNED:'Devuelto', CANCELLED:'Cancelado' };
+      const statusBadge = { ACTIVE:'badge-active', OVERDUE:'badge-overdue', RETURNED:'badge-returned', CANCELLED:'badge-cancelled' };
+      document.getElementById('historyBody').innerHTML = loans.length ? `
+        <table><thead><tr><th>Libro</th><th>Préstamo</th><th>Vence</th><th>Estado</th></tr></thead>
+        <tbody>${loans.map(l => `<tr>
+          <td>${l.book?.title||l.book_id}</td>
+          <td>${formatDate(l.loan_date)}</td>
+          <td>${formatDate(l.due_date)}</td>
+          <td><span class="badge ${statusBadge[l.status]||''}">${statusLabel[l.status]||l.status}</span></td>
+        </tr>`).join('')}</tbody></table>`
+      : '<div class="empty-state"><i class="ti ti-clock"></i><p>Sin préstamos registrados</p></div>';
+    } catch(e) { document.getElementById('historyBody').innerHTML = '<div class="empty-state"><p>Error al cargar</p></div>'; }
+  }
+
+  function closeHistory() { document.getElementById('historyModal').classList.remove('open'); }
+
+  loadAll().catch(() => showToast('Error al cargar','error'));
+</script>
+</body>
+</html>

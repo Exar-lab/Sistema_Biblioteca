@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Préstamos — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Préstamos y devoluciones</span>
+      <button class="btn btn-primary btn-sm" onclick="openLoanModal()"><i class="ti ti-plus"></i> Nuevo préstamo</button>
+    </header>
+    <div class="content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('active',this)">Activos</button>
+        <button class="tab-btn" onclick="switchTab('overdue',this)">Vencidos</button>
+        <button class="tab-btn" onclick="switchTab('all',this)">Todos</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Usuario</th><th>Libro</th><th>Préstamo</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="loansBody"><tr><td colspan="6" class="loading">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nuevo préstamo -->
+<div class="modal-overlay" id="loanModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo préstamo</span>
+      <button class="modal-close" onclick="closeLoanModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Usuario *</label>
+        <select id="fUser"><option value="">Seleccionar usuario…</option></select></div>
+      <div class="form-group form-full"><label>Libro *</label>
+        <select id="fBook"><option value="">Seleccionar libro…</option></select></div>
+      <div class="form-group"><label>Fecha préstamo</label><input id="fLoanDate" type="date"/></div>
+      <div class="form-group"><label>Fecha límite *</label><input id="fDueDate" type="date"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLoanModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLoan()"><i class="ti ti-device-floppy"></i> Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal devolución -->
+<div class="modal-overlay" id="returnModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Registrar devolución</span>
+      <button class="modal-close" onclick="closeReturnModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="returnInfo" style="margin-bottom:16px;padding:14px;background:var(--bg);border-radius:var(--radius-sm);font-size:0.875rem;color:var(--text-2);"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Multa (₡)</label><input id="fFine" type="number" min="0" step="0.01" value="0"/></div>
+      <div class="form-group form-full"><label>Notas</label><textarea id="fNotes" placeholder="Observaciones…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeReturnModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveReturn()"><i class="ti ti-check"></i> Confirmar devolución</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAdmin();
+  renderSidebar('prestamos');
+
+  let allLoans = [], allUsers = [], allBooks = [];
+  let currentTab = 'active', returnLoanId = null;
+
+  async function loadAll() {
+    [allLoans, allUsers, allBooks] = await Promise.all([
+      apiFetch('/loans/'), apiFetch('/users/'), apiFetch('/books/')
+    ]);
+    populateSelects();
+    renderLoans();
+  }
+
+  function populateSelects() {
+    const uSel = document.getElementById('fUser');
+    const bSel = document.getElementById('fBook');
+    allUsers.forEach(u => uSel.innerHTML += `<option value="${u.id}">${u.full_name} (${u.username})</option>`);
+    allBooks.filter(b => b.stock_available > 0).forEach(b => bSel.innerHTML += `<option value="${b.id}">${b.title} [${b.stock_available} disp.]</option>`);
+  }
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderLoans();
+  }
+
+  function renderLoans() {
+    let list = allLoans;
+    if (currentTab === 'active') list = list.filter(l => l.status === 'ACTIVE');
+    else if (currentTab === 'overdue') list = list.filter(l => l.status === 'OVERDUE');
+    const tbody = document.getElementById('loansBody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="ti ti-clock"></i><p>Sin préstamos en esta categoría</p></div></td></tr>'; return; }
+    tbody.innerHTML = list.map(l => {
+      const statusBadge = { ACTIVE:'badge-active', OVERDUE:'badge-overdue', RETURNED:'badge-returned', CANCELLED:'badge-cancelled' }[l.status] || '';
+      const statusLabel = { ACTIVE:'Activo', OVERDUE:'Vencido', RETURNED:'Devuelto', CANCELLED:'Cancelado' }[l.status] || l.status;
+      const canReturn = l.status === 'ACTIVE' || l.status === 'OVERDUE';
+      const canCancel = l.status === 'ACTIVE';
+      return `<tr style="${l.status==='OVERDUE'?'background:var(--danger-light);':''}">
+        <td>${l.user ? `<strong style="color:var(--text)">${l.user.full_name}</strong><br><span class="text-muted">${l.user.username}</span>` : l.user_id}</td>
+        <td>${l.book ? l.book.title : l.book_id}</td>
+        <td>${formatDate(l.loan_date)}</td>
+        <td>${formatDate(l.due_date)}</td>
+        <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+        <td><div style="display:flex;gap:6px;">
+          ${canReturn ? `<button class="btn btn-accent btn-sm" onclick="openReturnModal(${l.id})"><i class="ti ti-check"></i> Devolver</button>` : ''}
+          ${canCancel ? `<button class="btn btn-danger btn-sm" onclick="cancelLoan(${l.id})"><i class="ti ti-x"></i></button>` : ''}
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function openLoanModal() {
+    document.getElementById('fLoanDate').value = today();
+    document.getElementById('fDueDate').value = '';
+    document.getElementById('loanModal').classList.add('open');
+  }
+  function closeLoanModal() { document.getElementById('loanModal').classList.remove('open'); }
+
+  async function saveLoan() {
+    const uid = parseInt(document.getElementById('fUser').value);
+    const bid = parseInt(document.getElementById('fBook').value);
+    const due = document.getElementById('fDueDate').value;
+    const ldate = document.getElementById('fLoanDate').value || today();
+    if (!uid || !bid || !due) { showToast('Usuario, libro y fecha límite son obligatorios','warning'); return; }
+    try {
+      await apiFetch('/loans/', { method:'POST', body: JSON.stringify({ user_id:uid, book_id:bid, loan_date:ldate, due_date:due }) });
+      showToast('Préstamo registrado');
+      closeLoanModal();
+      allLoans = await apiFetch('/loans/');
+      renderLoans();
+    } catch(e) { showToast(e.detail||'Error al registrar','error'); }
+  }
+
+  function openReturnModal(loanId) {
+    returnLoanId = loanId;
+    const l = allLoans.find(x => x.id === loanId);
+    document.getElementById('returnInfo').innerHTML = `<strong>${l.book?.title}</strong> — ${l.user?.full_name}<br>Vencía: ${formatDate(l.due_date)}`;
+    document.getElementById('fFine').value = '0';
+    document.getElementById('fNotes').value = '';
+    document.getElementById('returnModal').classList.add('open');
+  }
+  function closeReturnModal() { document.getElementById('returnModal').classList.remove('open'); }
+
+  async function saveReturn() {
+    try {
+      await apiFetch('/returns/', { method:'POST', body: JSON.stringify({ loan_id: returnLoanId, fine_amount: parseFloat(document.getElementById('fFine').value) || 0, notes: document.getElementById('fNotes').value.trim() || null }) });
+      showToast('Devolución registrada');
+      closeReturnModal();
+      allLoans = await apiFetch('/loans/');
+      renderLoans();
+    } catch(e) { showToast(e.detail||'Error al registrar devolución','error'); }
+  }
+
+  function cancelLoan(id) {
+    confirm('Cancelar préstamo', '¿Cancelar este préstamo activo?', async () => {
+      try { await apiFetch(`/loans/${id}/cancel`, { method:'PATCH' }); showToast('Préstamo cancelado','warning'); allLoans = await apiFetch('/loans/'); renderLoans(); }
+      catch(e) { showToast(e.detail||'Error','error'); }
+    });
+  }
+
+  loadAll().catch(() => showToast('Error al cargar','error'));
+</script>
+</body>
+</html>

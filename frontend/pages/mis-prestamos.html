@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mis préstamos — Biblioteca</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar-title">Mis préstamos</span>
+    </header>
+    <div class="content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('active',this)">Activos</button>
+        <button class="tab-btn" onclick="switchTab('overdue',this)">Vencidos</button>
+        <button class="tab-btn" onclick="switchTab('returned',this)">Devueltos</button>
+        <button class="tab-btn" onclick="switchTab('all',this)">Todos</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Libro</th><th>Autores</th><th>Fecha préstamo</th><th>Fecha límite</th><th>Estado</th></tr></thead>
+            <tbody id="loansBody"><tr><td colspan="5" class="loading">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
+<script>
+  requireAuth();
+  if (isAdmin()) window.location.href = 'admin-dashboard.html';
+  renderSidebar('mis-prestamos');
+
+  let allLoans = [], currentTab = 'active';
+
+  const statusLabel = { ACTIVE:'Activo', OVERDUE:'Vencido', RETURNED:'Devuelto', CANCELLED:'Cancelado' };
+  const statusBadge = { ACTIVE:'badge-active', OVERDUE:'badge-overdue', RETURNED:'badge-returned', CANCELLED:'badge-cancelled' };
+
+  async function loadLoans() {
+    const me = await apiFetch('/auth/me');
+    allLoans = await apiFetch(`/loans/users/${me.id}`);
+    renderLoans();
+  }
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderLoans();
+  }
+
+  function renderLoans() {
+    let list = allLoans;
+    if (currentTab !== 'all') list = list.filter(l => l.status === currentTab.toUpperCase());
+    const tbody = document.getElementById('loansBody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="ti ti-clock"></i><p>Sin préstamos en esta categoría</p></div></td></tr>'; return; }
+    tbody.innerHTML = list.map(l => `
+      <tr style="${l.status==='OVERDUE'?'background:var(--danger-light);':''}">
+        <td><strong style="color:var(--text)">${l.book?.title||l.book_id}</strong></td>
+        <td>${l.book?.authors?.map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—'}</td>
+        <td>${formatDate(l.loan_date)}</td>
+        <td>${formatDate(l.due_date)}</td>
+        <td><span class="badge ${statusBadge[l.status]||''}">${statusLabel[l.status]||l.status}</span></td>
+      </tr>`).join('');
+  }
+
+  loadLoans().catch(() => showToast('Error al cargar préstamos','error'));
+</script>
+</body>
+</html>
