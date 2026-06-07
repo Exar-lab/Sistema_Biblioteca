@@ -61,12 +61,12 @@
     if (!list.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="ti ti-tags"></i><p>No hay categorías</p></div></td></tr>'; return; }
     tbody.innerHTML = list.map(c => `
       <tr>
-        <td><strong style="color:var(--text)">${c.name}</strong></td>
-        <td>${c.description || '—'}</td>
+        <td><strong style="color:var(--text)">${escapeHtml(c.name)}</strong></td>
+        <td>${escapeHtml(c.description || '—')}</td>
         <td><span class="badge ${c.is_active?'badge-active':'badge-inactive'}">${c.is_active?'Activa':'Inactiva'}</span></td>
         <td><div style="display:flex;gap:6px;">
           <button class="btn-icon" onclick="openModal(${c.id})"><i class="ti ti-edit"></i></button>
-          <button class="btn-icon danger" onclick="deleteItem(${c.id},'${c.name}')"><i class="ti ti-trash"></i></button>
+          <button class="btn-icon danger" onclick='deleteItem(${c.id}, ${jsString(c.name)})'><i class="ti ti-trash"></i></button>
         </div></td>
       </tr>`).join('');
   }

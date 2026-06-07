@@ -36,7 +36,7 @@
   <script src="js/api.js"></script>
   <script>
     if (getToken()) {
-      window.location.href = isAdmin() ? 'pages/admin-dashboard.html' : 'pages/usuario.html';
+      window.location.href = resolvePageUrl(isAdmin() ? 'admin-dashboard.html' : 'usuario.html');
     }
 
     document.getElementById('password').addEventListener('keydown', e => {
@@ -58,7 +58,7 @@
           })
         });
         setSession(data);
-        window.location.href = isAdmin() ? 'pages/admin-dashboard.html' : 'pages/usuario.html';
+        window.location.href = resolvePageUrl(isAdmin() ? 'admin-dashboard.html' : 'usuario.html');
       } catch (e) {
         err.textContent = e.detail || 'Credenciales incorrectas';
         err.classList.add('show');

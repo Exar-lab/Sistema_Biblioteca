@@ -75,12 +75,12 @@
     if (!list.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="ti ti-user-circle"></i><p>No hay autores</p></div></td></tr>'; return; }
     tbody.innerHTML = list.map(a => `
       <tr>
-        <td><strong style="color:var(--text)">${a.first_name} ${a.last_name}</strong>${a.biography ? `<br><span class="text-muted" style="max-width:400px;display:inline-block;">${a.biography.slice(0,80)}${a.biography.length>80?'…':''}</span>` : ''}</td>
+        <td><strong style="color:var(--text)">${escapeHtml(`${a.first_name} ${a.last_name}`)}</strong>${a.biography ? `<br><span class="text-muted" style="max-width:400px;display:inline-block;">${escapeHtml(a.biography.slice(0,80))}${a.biography.length>80?'…':''}</span>` : ''}</td>
         <td>${formatDate(a.birth_date)}</td>
         <td><span class="badge ${a.is_active ? 'badge-active':'badge-inactive'}">${a.is_active?'Activo':'Inactivo'}</span></td>
         <td><div style="display:flex;gap:6px;">
           <button class="btn-icon" onclick="openModal(${a.id})"><i class="ti ti-edit"></i></button>
-          <button class="btn-icon danger" onclick="deleteItem(${a.id},'${a.first_name} ${a.last_name}')"><i class="ti ti-trash"></i></button>
+          <button class="btn-icon danger" onclick='deleteItem(${a.id}, ${jsString(`${a.first_name} ${a.last_name}`)})'><i class="ti ti-trash"></i></button>
         </div></td>
       </tr>`).join('');
   }

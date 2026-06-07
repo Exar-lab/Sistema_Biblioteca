@@ -83,18 +83,27 @@
   let currentTab = 'active', returnLoanId = null;
 
   async function loadAll() {
-    [allLoans, allUsers, allBooks] = await Promise.all([
+    const [loansRes, usersRes, booksRes] = await Promise.allSettled([
       apiFetch('/loans/'), apiFetch('/users/'), apiFetch('/books/')
     ]);
+    if (loansRes.status === 'rejected') throw loansRes.reason;
+    allLoans = loansRes.value;
+    allUsers = usersRes.status === 'fulfilled' ? usersRes.value : [];
+    allBooks = booksRes.status === 'fulfilled' ? booksRes.value : [];
     populateSelects();
     renderLoans();
+    if (usersRes.status === 'rejected' || booksRes.status === 'rejected') {
+      showToast('No se pudieron cargar algunos datos del formulario','warning');
+    }
   }
 
   function populateSelects() {
     const uSel = document.getElementById('fUser');
     const bSel = document.getElementById('fBook');
-    allUsers.forEach(u => uSel.innerHTML += `<option value="${u.id}">${u.full_name} (${u.username})</option>`);
-    allBooks.filter(b => b.stock_available > 0).forEach(b => bSel.innerHTML += `<option value="${b.id}">${b.title} [${b.stock_available} disp.]</option>`);
+    uSel.innerHTML = '<option value="">Seleccionar usuario…</option>';
+    bSel.innerHTML = '<option value="">Seleccionar libro…</option>';
+    allUsers.forEach(u => uSel.innerHTML += `<option value="${u.id}">${escapeHtml(`${u.full_name} (${u.username})`)}</option>`);
+    allBooks.filter(b => b.stock_available > 0).forEach(b => bSel.innerHTML += `<option value="${b.id}">${escapeHtml(`${b.title} [${b.stock_available} disp.]`)}</option>`);
   }
 
   function switchTab(tab, btn) {
@@ -116,8 +125,8 @@
       const canReturn = l.status === 'ACTIVE' || l.status === 'OVERDUE';
       const canCancel = l.status === 'ACTIVE';
       return `<tr style="${l.status==='OVERDUE'?'background:var(--danger-light);':''}">
-        <td>${l.user ? `<strong style="color:var(--text)">${l.user.full_name}</strong><br><span class="text-muted">${l.user.username}</span>` : l.user_id}</td>
-        <td>${l.book ? l.book.title : l.book_id}</td>
+        <td>${l.user ? `<strong style="color:var(--text)">${escapeHtml(l.user.full_name)}</strong><br><span class="text-muted">${escapeHtml(l.user.username)}</span>` : escapeHtml(l.user_id)}</td>
+        <td>${l.book ? escapeHtml(l.book.title) : escapeHtml(l.book_id)}</td>
         <td>${formatDate(l.loan_date)}</td>
         <td>${formatDate(l.due_date)}</td>
         <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
@@ -154,7 +163,7 @@
   function openReturnModal(loanId) {
     returnLoanId = loanId;
     const l = allLoans.find(x => x.id === loanId);
-    document.getElementById('returnInfo').innerHTML = `<strong>${l.book?.title}</strong> — ${l.user?.full_name}<br>Vencía: ${formatDate(l.due_date)}`;
+    document.getElementById('returnInfo').innerHTML = `<strong>${escapeHtml(l.book?.title)}</strong> — ${escapeHtml(l.user?.full_name)}<br>Vencía: ${formatDate(l.due_date)}`;
     document.getElementById('fFine').value = '0';
     document.getElementById('fNotes').value = '';
     document.getElementById('returnModal').classList.add('open');

@@ -56,10 +56,15 @@
   let allBooks = [], allCategories = [];
 
   async function loadAll() {
-    [allBooks, allCategories] = await Promise.all([apiFetch('/books/'), apiFetch('/categories/')]);
+    const [booksRes, categoriesRes] = await Promise.allSettled([apiFetch('/books/'), apiFetch('/categories/')]);
+    if (booksRes.status === 'rejected') throw booksRes.reason;
+    allBooks = booksRes.value;
+    allCategories = categoriesRes.status === 'fulfilled' ? categoriesRes.value : [];
     const sel = document.getElementById('filterCategory');
-    allCategories.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+    sel.innerHTML = '<option value="">Todas las categorías</option>';
+    allCategories.forEach(c => sel.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`);
     renderBooks(allBooks);
+    if (categoriesRes.status === 'rejected') showToast('No se pudieron cargar algunas categorías','warning');
   }
 
   function filterBooks() {
@@ -85,9 +90,9 @@
           </div>
           <span class="badge ${b.stock_available>0?'badge-active':'badge-inactive'}" style="flex-shrink:0;">${b.stock_available>0?`${b.stock_available} disp.`:'Sin stock'}</span>
         </div>
-        <div style="font-weight:500;color:var(--text);font-size:0.9rem;line-height:1.3;margin-bottom:6px;">${b.title}</div>
-        <div class="text-muted" style="font-size:0.78rem;margin-bottom:4px;">${b.authors.map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—'}</div>
-        ${b.category ? `<span class="badge badge-returned" style="font-size:0.7rem;">${b.category.name}</span>` : ''}
+        <div style="font-weight:500;color:var(--text);font-size:0.9rem;line-height:1.3;margin-bottom:6px;">${escapeHtml(b.title)}</div>
+        <div class="text-muted" style="font-size:0.78rem;margin-bottom:4px;">${escapeHtml((b.authors || []).map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—')}</div>
+        ${b.category ? `<span class="badge badge-returned" style="font-size:0.7rem;">${escapeHtml(b.category.name)}</span>` : ''}
       </div>`).join('');
   }
 
@@ -96,16 +101,16 @@
     document.getElementById('bookModalTitle').textContent = b.title;
     document.getElementById('bookModalBody').innerHTML = `
       <table style="width:100%;font-size:0.875rem;margin-bottom:12px;">
-        <tr><td style="color:var(--text-3);padding:6px 0;width:130px;">Autores</td><td>${b.authors.map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—'}</td></tr>
-        <tr><td style="color:var(--text-3);padding:6px 0;">Categoría</td><td>${b.category?.name||'—'}</td></tr>
-        <tr><td style="color:var(--text-3);padding:6px 0;">Editorial</td><td>${b.publisher||'—'}</td></tr>
-        <tr><td style="color:var(--text-3);padding:6px 0;">Edición</td><td>${b.edition||'—'}</td></tr>
-        <tr><td style="color:var(--text-3);padding:6px 0;">ISBN</td><td>${b.isbn||'—'}</td></tr>
-        <tr><td style="color:var(--text-3);padding:6px 0;">Páginas</td><td>${b.pages||'—'}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;width:130px;">Autores</td><td>${escapeHtml((b.authors || []).map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—')}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Categoría</td><td>${escapeHtml(b.category?.name||'—')}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Editorial</td><td>${escapeHtml(b.publisher||'—')}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Edición</td><td>${escapeHtml(b.edition||'—')}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">ISBN</td><td>${escapeHtml(b.isbn||'—')}</td></tr>
+        <tr><td style="color:var(--text-3);padding:6px 0;">Páginas</td><td>${escapeHtml(b.pages||'—')}</td></tr>
         <tr><td style="color:var(--text-3);padding:6px 0;">Publicación</td><td>${formatDate(b.publication_date)}</td></tr>
         <tr><td style="color:var(--text-3);padding:6px 0;">Disponibles</td><td><strong>${b.stock_available}</strong> de ${b.stock_total}</td></tr>
       </table>
-      ${b.description ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;font-size:0.85rem;color:var(--text-2);line-height:1.6;">${b.description}</div>` : ''}
+      ${b.description ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;font-size:0.85rem;color:var(--text-2);line-height:1.6;">${escapeHtml(b.description)}</div>` : ''}
       ${b.stock_available === 0 ? '<div style="margin-top:12px;padding:10px 14px;background:var(--danger-light);border-radius:var(--radius-sm);color:var(--danger);font-size:0.82rem;">Este libro no está disponible actualmente.</div>' : ''}
     `;
     document.getElementById('bookModal').classList.add('open');

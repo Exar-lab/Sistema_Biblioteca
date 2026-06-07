@@ -107,7 +107,7 @@
     if (!books.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-circle-check"></i><p>Sin libros con stock bajo</p></div>'; return; }
     el.innerHTML = books.map(b => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:0.85rem;">${b.title}</span>
+        <span style="font-size:0.85rem;">${escapeHtml(b.title)}</span>
         <span class="badge badge-low">${b.stock_available}/${b.stock_total}</span>
       </div>`).join('');
   }
