@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.2](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.10.1...sistema-biblioteca-v0.10.2) (2026-06-07)
+
+
+### Bug Fixes
+
+* **frontend:** serve static app at root ([5fbb6fe](https://github.com/Exar-lab/Sistema_Biblioteca/commit/5fbb6feff2f4c969f8b601a0942819d47c27569a))
+* **frontend:** serve static app at root ([b071000](https://github.com/Exar-lab/Sistema_Biblioteca/commit/b0710005c6bf8b135ba88ef5498436eda9c3ea32))
+
 ## [0.10.1](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.10.0...sistema-biblioteca-v0.10.1) (2026-06-07)
 
 
