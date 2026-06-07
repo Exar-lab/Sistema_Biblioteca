@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.1](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.10.0...sistema-biblioteca-v0.10.1) (2026-06-07)
+
+
+### Bug Fixes
+
+* **frontend:** harden static app delivery ([66e5350](https://github.com/Exar-lab/Sistema_Biblioteca/commit/66e53507127edd07ef81f5c18b6d82475368b23e))
+* **frontend:** harden static app delivery ([4d1ada3](https://github.com/Exar-lab/Sistema_Biblioteca/commit/4d1ada35c8230e2d61a99a024040f7cb7fda28fd))
+
 ## [0.10.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.9.0...sistema-biblioteca-v0.10.0) (2026-06-07)
 
 
