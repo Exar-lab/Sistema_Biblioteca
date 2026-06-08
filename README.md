@@ -129,6 +129,27 @@ sqlplus / as sysdba @database/oracle_schema.sql
 
 The script asks for the `BIBLIOTECA` password and is designed to be idempotent.
 
+## 🌱 Demo Data
+
+Seed deterministic demo data after the schema is ready:
+
+```powershell
+python scripts/seed_demo_data.py
+```
+
+The script is designed to be rerunnable for the demo-prefixed records and uses fixed demo dates so loan history stays deterministic.
+
+Demo credentials:
+
+| Username | Password | Role |
+| --- | --- | --- |
+| `demo.admin` | `DemoAdmin123!` | Admin |
+| `demo.alice` | `DemoUser123!` | Usuario |
+| `demo.ben` | `DemoUser123!` | Usuario |
+| `demo.clara` | `DemoUser123!` | Usuario |
+| `demo.dan` | `DemoUser123!` | Usuario |
+| `demo.valeria` | `DemoUser123!` | Usuario |
+
 ### Validate database objects
 
 ```sql
@@ -145,7 +166,7 @@ ORDER BY object_type, object_name;
 ### Verify Python syntax
 
 ```powershell
-python -m compileall app main.py
+python -m compileall app main.py scripts
 ```
 
 ### Run the development server
