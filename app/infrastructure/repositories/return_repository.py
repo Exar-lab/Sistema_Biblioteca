@@ -1,5 +1,6 @@
 """OracleReturnRepository — create via pkg_returns.p_process, reads via ORM."""
 
+import datetime
 from typing import Any
 
 from sqlalchemy import select, text
@@ -25,7 +26,13 @@ class ReturnRepository:
         """Return all return records."""
         return list(session.execute(select(Return_)).scalars().all())
 
-    def create(self, session: Session, data: Any) -> Return_:
+    def get_by_loan(self, session: Session, loan_id: int) -> Return_ | None:
+        """Return the Return_ record for *loan_id*, or None if the loan has not been returned."""
+        return session.execute(
+            select(Return_).where(Return_.loan_id == loan_id)
+        ).scalar_one_or_none()
+
+    def create(self, session: Session, data: Any, loan_instance: Any = None) -> Return_:
         """Insert a return record via pkg_returns.p_process (OUT id) and return the new instance.
 
         The Oracle trigger trg_returns_restore_stock fires after INSERT and updates
@@ -38,8 +45,8 @@ class ReturnRepository:
                 "BIBLIOTECA.pkg_returns.p_process",
                 [
                     data.loan_id,
-                    data.return_date,
-                    data.fine_amount,
+                    datetime.date.today(),
+                    float(data.fine_amount) if data.fine_amount else 0.0,
                     data.notes,
                     out_id,
                 ],

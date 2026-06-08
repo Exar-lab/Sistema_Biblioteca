@@ -1,5 +1,7 @@
 """Application service for loan workflows."""
 
+import datetime
+from types import SimpleNamespace
 from typing import Any
 
 from app.application.errors import ConflictError, NotFoundError
@@ -63,6 +65,24 @@ class LoanService:
 
         if not self._loan_repository.delete(session, loan_id):
             raise NotFoundError("Loan not found.")
+
+    def return_loan(self, session: Any, loan_id: int) -> Any:
+        """Mark a loan as returned and set return_date to today."""
+
+        loan = self._loan_repository.get_by_id(session, loan_id)
+        if loan is None:
+            raise NotFoundError("Loan not found.")
+
+        status = str(getattr(loan, "status", "ACTIVE")).upper()
+        if status not in ("ACTIVE", "OVERDUE"):
+            raise ConflictError("Loan is already returned or cancelled.")
+
+        payload = SimpleNamespace(
+            model_fields_set={"return_date", "status"},
+            return_date=datetime.date.today(),
+            status="RETURNED",
+        )
+        return self._loan_repository.update(session, loan_id, payload)
 
     def cancel_loan(self, session: Any, loan_id: int) -> Any:
         """Cancel an active loan and return the refreshed record."""

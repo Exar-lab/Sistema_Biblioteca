@@ -34,11 +34,11 @@ class ReturnService:
         loan = self._loan_repository.get_by_id(session, data.loan_id)
         if loan is None:
             raise NotFoundError("Loan not found.")
-        if getattr(loan, "status", "ACTIVE") != "ACTIVE":
+        if str(getattr(loan, "status", "ACTIVE")).upper() not in ("ACTIVE", "OVERDUE"):
             raise ConflictError("Loan is not active and cannot be returned.")
         if self._return_repository.get_by_loan(session, data.loan_id) is not None:
             raise ConflictError("A return record already exists for this loan.")
-        return self._return_repository.create(session, data, loan_instance=loan)
+        return self._return_repository.create(session, data)
 
     def update_return(self, session: Any, return_id: int, data: ReturnUpdate) -> Any:
         """Update a return record or raise when it does not exist."""
