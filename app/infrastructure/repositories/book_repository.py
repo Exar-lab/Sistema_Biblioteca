@@ -92,6 +92,12 @@ class BookRepository:
     def update(self, session: Session, id: int, data: Any) -> Book:
         """Update a book via pkg_books.p_update and return the refreshed instance."""
         current = self.get_by_id(session, id)
+        if current is None:
+            return None
+
+        values = data.model_dump(exclude_unset=True, exclude_none=True)
+        stock_total = values.get("stock_total", current.stock_total)
+        stock_available = min(current.stock_available, stock_total)
         session.execute(
             text(
                 "BEGIN BIBLIOTECA.pkg_books.p_update("
@@ -101,17 +107,17 @@ class BookRepository:
             ),
             {
                 "p_id": id,
-                "p_title": data.title,
-                "p_isbn": data.isbn,
-                "p_description": data.description,
-                "p_publication_date": data.publication_date,
-                "p_publisher": data.publisher,
-                "p_edition": data.edition,
-                "p_pages": data.pages,
-                "p_stock_total": data.stock_total,
-                "p_stock_available": current.stock_available if current else None,
-                "p_is_active": data.is_active,
-                "p_category_id": data.category_id,
+                "p_title": values.get("title", current.title),
+                "p_isbn": values.get("isbn", current.isbn),
+                "p_description": values.get("description", current.description),
+                "p_publication_date": values.get("publication_date", current.publication_date),
+                "p_publisher": values.get("publisher", current.publisher),
+                "p_edition": values.get("edition", current.edition),
+                "p_pages": values.get("pages", current.pages),
+                "p_stock_total": stock_total,
+                "p_stock_available": stock_available,
+                "p_is_active": values.get("is_active", current.is_active),
+                "p_category_id": values.get("category_id", current.category_id),
             },
         )
         session.expire_all()

@@ -38,7 +38,9 @@ class BookService:
     def create_book(self, session: Any, data: BookCreate) -> Any:
         """Create a book."""
 
-        return self._repository.create(session, data)
+        book = self._repository.create(session, data)
+        self._repository.set_authors(session, book.id, data.author_ids)
+        return self._repository.get_with_authors(session, book.id) or book
 
     def update_book(self, session: Any, book_id: int, data: BookUpdate) -> Any:
         """Update a book or raise when it does not exist."""
@@ -46,7 +48,9 @@ class BookService:
         book = self._repository.update(session, book_id, data)
         if book is None:
             raise NotFoundError("Book not found.")
-        return book
+        if data.author_ids is not None:
+            self._repository.set_authors(session, book_id, data.author_ids)
+        return self._repository.get_with_authors(session, book_id) or book
 
     def delete_book(self, session: Any, book_id: int) -> None:
         """Delete a book or raise when it does not exist."""
