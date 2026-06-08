@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.11.0...sistema-biblioteca-v0.12.0) (2026-06-08)
+
+
+### Features
+
+* **loans:** add self-service loan request for authenticated users ([8dcd92a](https://github.com/Exar-lab/Sistema_Biblioteca/commit/8dcd92a083ca970f264b5987d2201cc17a70d1c3))
+* **loans:** user self-service loan request + API/return bug fixes ([01b1c82](https://github.com/Exar-lab/Sistema_Biblioteca/commit/01b1c8227605f87c317423fd6c3d2d77bd2a2ba4))
+
+
+### Bug Fixes
+
+* **api:** use relative API_BASE, fix return flow and Oracle type issues ([719a0da](https://github.com/Exar-lab/Sistema_Biblioteca/commit/719a0da4063f3d0ced6defec3becc36b4459d727))
+
 ## [0.11.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.10.2...sistema-biblioteca-v0.11.0) (2026-06-08)
 
 
