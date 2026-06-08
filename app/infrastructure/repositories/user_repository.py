@@ -42,7 +42,7 @@ class UserRepository:
                     data.email,
                     data.phone,
                     data.password_hash,
-                    data.is_active,
+                    "Y" if data.is_active else "N",
                     data.role_id,
                     out_id,
                 ],

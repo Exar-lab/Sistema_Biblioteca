@@ -13,9 +13,113 @@
     <header class="topbar">
       <span class="topbar-title">Catálogo de libros</span>
     </header>
-    <div class="content">
-      <div class="toolbar">
-        <div class="search-wrap" style="flex:2;">
+    <style>
+    .catalog-toolbar {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .catalog-search {
+      flex: 2; min-width: 180px; position: relative;
+    }
+    .catalog-search i {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-3); font-size: 15px; pointer-events: none;
+    }
+    .catalog-search input {
+      width: 100%; padding: 9px 12px 9px 36px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface); font-family: var(--font-body); font-size: 0.875rem;
+      color: var(--text); outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .catalog-search input:focus { border-color: var(--brand-mid); box-shadow: 0 0 0 3px rgba(20,184,166,0.12); }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 20px;
+    }
+
+    .book-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column;
+    }
+    .book-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(15,63,58,0.16);
+      border-color: var(--brand-mid);
+    }
+
+    .book-cover {
+      height: 148px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+      padding: 16px;
+    }
+    .book-cover::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.18) 100%);
+    }
+    .book-cover-initials {
+      font-family: var(--font-display);
+      font-size: 2.2rem; font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      text-align: center; line-height: 1.1;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      z-index: 1; max-width: 100%; word-break: break-word;
+      letter-spacing: -0.5px;
+    }
+    .book-cover-icon {
+      font-size: 1.8rem; color: rgba(255,255,255,0.4);
+      margin-top: 6px; z-index: 1;
+    }
+
+    .book-avail-badge {
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      padding: 3px 9px; border-radius: 999px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3px;
+      backdrop-filter: blur(8px);
+    }
+    .book-avail-badge.available {
+      background: rgba(26,107,74,0.82); color: #d1fae5;
+    }
+    .book-avail-badge.unavailable {
+      background: rgba(192,57,43,0.78); color: #fee2e2;
+    }
+
+    .book-body {
+      padding: 14px 14px 16px;
+      display: flex; flex-direction: column; gap: 5px; flex: 1;
+    }
+    .book-title {
+      font-family: var(--font-display);
+      font-size: 0.9rem; font-weight: 500;
+      color: var(--text); line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .book-author {
+      font-size: 0.75rem; color: var(--text-3);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .book-category-tag {
+      margin-top: auto; padding-top: 8px;
+    }
+    .book-category-tag span {
+      display: inline-block;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2px;
+    }
+  </style>
+
+  <div class="content">
+      <div class="catalog-toolbar">
+        <div class="catalog-search">
           <i class="ti ti-search"></i>
           <input type="text" id="searchTitle" placeholder="Buscar por título…" oninput="filterBooks()"/>
         </div>
@@ -28,7 +132,7 @@
         </select>
       </div>
 
-      <div id="bookGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
+      <div id="bookGrid" class="book-grid">
         <div class="loading" style="grid-column:1/-1;">Cargando catálogo…</div>
       </div>
     </div>
@@ -79,21 +183,60 @@
     }));
   }
 
+  const COVER_PALETTES = [
+    { bg: 'linear-gradient(135deg,#0f766e 0%,#14b8a6 100%)', tag: '#d1fae5', tagText: '#065f46' },
+    { bg: 'linear-gradient(135deg,#1d4ed8 0%,#60a5fa 100%)', tag: '#dbeafe', tagText: '#1e3a8a' },
+    { bg: 'linear-gradient(135deg,#7c3aed 0%,#c084fc 100%)', tag: '#ede9fe', tagText: '#4c1d95' },
+    { bg: 'linear-gradient(135deg,#b45309 0%,#fbbf24 100%)', tag: '#fef3c7', tagText: '#78350f' },
+    { bg: 'linear-gradient(135deg,#be123c 0%,#fb7185 100%)', tag: '#ffe4e6', tagText: '#881337' },
+    { bg: 'linear-gradient(135deg,#065f46 0%,#34d399 100%)', tag: '#d1fae5', tagText: '#064e3b' },
+    { bg: 'linear-gradient(135deg,#0369a1 0%,#38bdf8 100%)', tag: '#e0f2fe', tagText: '#0c4a6e' },
+    { bg: 'linear-gradient(135deg,#6b21a8 0%,#e879f9 100%)', tag: '#fae8ff', tagText: '#581c87' },
+    { bg: 'linear-gradient(135deg,#92400e 0%,#f97316 100%)', tag: '#ffedd5', tagText: '#7c2d12' },
+    { bg: 'linear-gradient(135deg,#166534 0%,#86efac 100%)', tag: '#dcfce7', tagText: '#14532d' },
+  ];
+
+  function getCoverPalette(categoryId) {
+    const idx = categoryId ? (categoryId - 1) % COVER_PALETTES.length : 0;
+    return COVER_PALETTES[idx];
+  }
+
+  function titleInitials(title) {
+    const words = title.trim().split(/\s+/).filter(w => w.length > 2);
+    if (words.length === 0) return title.slice(0, 2).toUpperCase();
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+
   function renderBooks(list) {
     const grid = document.getElementById('bookGrid');
-    if (!list.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-books"></i><p>No se encontraron libros</p></div>'; return; }
-    grid.innerHTML = list.map(b => `
-      <div class="card" style="cursor:pointer;transition:box-shadow 0.15s;" onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'" onmouseleave="this.style.boxShadow=''" onclick="showDetail(${b.id})">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
-          <div style="width:44px;height:56px;background:var(--brand-light);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <i class="ti ti-book" style="font-size:22px;color:var(--brand);" aria-hidden="true"></i>
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-books"></i><p>No se encontraron libros</p></div>';
+      return;
+    }
+    grid.innerHTML = list.map(b => {
+      const palette = getCoverPalette(b.category?.id);
+      const authors = (b.authors || []).map(a => `${a.first_name} ${a.last_name}`).join(', ') || '—';
+      const avail = b.stock_available > 0;
+      return `
+        <div class="book-card" onclick="showDetail(${b.id})">
+          <div class="book-cover" style="background:${palette.bg};">
+            <span class="book-cover-initials">${titleInitials(b.title)}</span>
+            <i class="ti ti-book-2 book-cover-icon" aria-hidden="true"></i>
+            <span class="book-avail-badge ${avail ? 'available' : 'unavailable'}">
+              ${avail ? `${b.stock_available} disp.` : 'Sin stock'}
+            </span>
           </div>
-          <span class="badge ${b.stock_available>0?'badge-active':'badge-inactive'}" style="flex-shrink:0;">${b.stock_available>0?`${b.stock_available} disp.`:'Sin stock'}</span>
-        </div>
-        <div style="font-weight:500;color:var(--text);font-size:0.9rem;line-height:1.3;margin-bottom:6px;">${escapeHtml(b.title)}</div>
-        <div class="text-muted" style="font-size:0.78rem;margin-bottom:4px;">${escapeHtml((b.authors || []).map(a=>`${a.first_name} ${a.last_name}`).join(', ')||'—')}</div>
-        ${b.category ? `<span class="badge badge-returned" style="font-size:0.7rem;">${escapeHtml(b.category.name)}</span>` : ''}
-      </div>`).join('');
+          <div class="book-body">
+            <div class="book-title">${escapeHtml(b.title)}</div>
+            <div class="book-author">${escapeHtml(authors)}</div>
+            ${b.category ? `
+            <div class="book-category-tag">
+              <span style="background:${palette.tag};color:${palette.tagText};">${escapeHtml(b.category.name)}</span>
+            </div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
   }
 
   function showDetail(id) {

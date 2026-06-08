@@ -35,6 +35,14 @@ class LoanCreate(LoanBase):
     """Payload used to create a loan."""
 
 
+class LoanCreateSelf(BaseSchema):
+    """Payload used by an authenticated user to borrow a book for themselves."""
+
+    model_config = ConfigDict(**BaseSchema.model_config, extra="forbid")
+
+    book_id: int = Field(..., gt=0, description="Book to borrow.")
+
+
 class LoanUpdate(BaseSchema):
     """Payload used to update a loan's safe admin-editable fields."""
 
@@ -52,4 +60,4 @@ class LoanRead(LoanBase, IdSchema, TimestampSchema):
     book: BookRead | None = None
 
 
-__all__ = ["LoanBase", "LoanCreate", "LoanRead", "LoanStatus", "LoanUpdate"]
+__all__ = ["LoanBase", "LoanCreate", "LoanCreateSelf", "LoanRead", "LoanStatus", "LoanUpdate"]
