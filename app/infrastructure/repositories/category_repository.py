@@ -6,6 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.domain.models.category import Category
+from app.domain.models.types import bool_to_oracle_char
 from app.application.ports.category_repository import CategoryRepository as CategoryRepositoryPort
 
 
@@ -30,7 +31,7 @@ class CategoryRepository:
             out_id = cur.var(int)
             cur.callproc(
                 "BIBLIOTECA.pkg_categories.p_insert",
-                [data.name, data.description, data.is_active, out_id],
+                [data.name, data.description, bool_to_oracle_char(data.is_active), out_id],
             )
             new_id = out_id.getvalue()
         session.expire_all()
@@ -47,7 +48,7 @@ class CategoryRepository:
                 "p_id": id,
                 "p_name": data.name,
                 "p_description": data.description,
-                "p_is_active": data.is_active,
+                "p_is_active": bool_to_oracle_char(data.is_active),
             },
         )
         session.expire_all()

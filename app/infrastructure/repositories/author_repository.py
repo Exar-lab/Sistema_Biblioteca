@@ -6,6 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.domain.models.author import Author
+from app.domain.models.types import bool_to_oracle_char
 from app.application.ports.author_repository import AuthorRepository as AuthorRepositoryPort
 
 
@@ -36,7 +37,7 @@ class AuthorRepository:
                     data.biography,
                     data.birth_date,
                     data.death_date,
-                    data.is_active,
+                    bool_to_oracle_char(data.is_active),
                     out_id,
                 ],
             )
@@ -59,7 +60,7 @@ class AuthorRepository:
                 "p_biography": data.biography,
                 "p_birth_date": data.birth_date,
                 "p_death_date": data.death_date,
-                "p_is_active": data.is_active,
+                "p_is_active": bool_to_oracle_char(data.is_active),
             },
         )
         session.expire_all()

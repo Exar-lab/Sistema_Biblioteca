@@ -29,3 +29,11 @@ class BoolChar(TypeDecorator):
         if value is None:
             return None
         return value == "Y"
+
+
+def bool_to_oracle_char(value: bool | None) -> str | None:
+    """Convert Python booleans to Oracle CHAR(1) flag values."""
+
+    if value is None:
+        return None
+    return "Y" if value else "N"
