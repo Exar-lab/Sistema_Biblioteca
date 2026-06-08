@@ -108,6 +108,25 @@ function showToast(msg, type = 'success') {
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
 }
 
+function confirm(title, message, onConfirm) {
+  const dialog = document.createElement('div');
+  dialog.className = 'confirm-dialog';
+  dialog.innerHTML = `
+    <div class="confirm-box">
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(message)}</p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="_cfCancel">Cancelar</button>
+        <button class="btn btn-danger" id="_cfOk">Eliminar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(dialog);
+  const close = () => dialog.remove();
+  dialog.querySelector('#_cfCancel').addEventListener('click', close);
+  dialog.querySelector('#_cfOk').addEventListener('click', () => { close(); onConfirm(); });
+  dialog.addEventListener('click', e => { if (e.target === dialog) close(); });
+}
+
 function formatDate(str) {
   if (!str) return '—';
   return new Date(str).toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });

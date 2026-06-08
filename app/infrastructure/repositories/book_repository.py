@@ -79,7 +79,7 @@ class BookRepository:
                     data.edition,
                     data.pages,
                     data.stock_total,
-                    data.stock_available,
+                    data.stock_total,  # stock_available starts equal to stock_total on creation
                     data.is_active,
                     data.category_id,
                     out_id,
@@ -91,6 +91,7 @@ class BookRepository:
 
     def update(self, session: Session, id: int, data: Any) -> Book:
         """Update a book via pkg_books.p_update and return the refreshed instance."""
+        current = self.get_by_id(session, id)
         session.execute(
             text(
                 "BEGIN BIBLIOTECA.pkg_books.p_update("
@@ -108,7 +109,7 @@ class BookRepository:
                 "p_edition": data.edition,
                 "p_pages": data.pages,
                 "p_stock_total": data.stock_total,
-                "p_stock_available": data.stock_available,
+                "p_stock_available": current.stock_available if current else None,
                 "p_is_active": data.is_active,
                 "p_category_id": data.category_id,
             },
