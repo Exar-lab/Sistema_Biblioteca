@@ -16,20 +16,54 @@
     </div>
     <div class="login-right">
       <div class="login-form-wrap">
-        <h2>Bienvenido</h2>
-        <p>Ingresa tus credenciales para continuar</p>
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="loginTab" type="button" onclick="showAuthMode('login')">Iniciar sesión</button>
+          <button class="auth-tab" id="registerTab" type="button" onclick="showAuthMode('register')">Crear cuenta</button>
+        </div>
+
+        <h2 id="authTitle">Bienvenido</h2>
+        <p id="authSubtitle">Ingresa tus credenciales para continuar</p>
         <div class="login-error" id="loginError"></div>
-        <div class="form-group">
-          <label for="username">Usuario</label>
-          <input type="text" id="username" placeholder="nombre de usuario" autocomplete="username" />
+
+        <div id="loginForm">
+          <div class="form-group">
+            <label for="username">Usuario</label>
+            <input type="text" id="username" placeholder="nombre de usuario" autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <button class="btn btn-primary login-btn" id="loginBtn" onclick="doLogin()">
+            <i class="ti ti-login"></i> Iniciar sesión
+          </button>
         </div>
-        <div class="form-group">
-          <label for="password">Contraseña</label>
-          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+
+        <div id="registerForm" class="hidden">
+          <div class="form-group">
+            <label for="registerFullName">Nombre completo</label>
+            <input type="text" id="registerFullName" placeholder="María Rodríguez" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label for="registerUsername">Usuario</label>
+            <input type="text" id="registerUsername" placeholder="mrodriguez" autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label for="registerEmail">Correo electrónico</label>
+            <input type="email" id="registerEmail" placeholder="correo@ejemplo.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="registerPhone">Teléfono <span class="optional-label">opcional</span></label>
+            <input type="tel" id="registerPhone" placeholder="8888-8888" autocomplete="tel" />
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">Contraseña</label>
+            <input type="password" id="registerPassword" placeholder="mínimo 8 caracteres" autocomplete="new-password" />
+          </div>
+          <button class="btn btn-primary login-btn" id="registerBtn" onclick="doRegister()">
+            <i class="ti ti-user-plus"></i> Crear cuenta
+          </button>
         </div>
-        <button class="btn btn-primary login-btn" id="loginBtn" onclick="doLogin()">
-          <i class="ti ti-login"></i> Iniciar sesión
-        </button>
       </div>
     </div>
   </div>
@@ -43,10 +77,49 @@
       if (e.key === 'Enter') doLogin();
     });
 
+    document.getElementById('registerPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doRegister();
+    });
+
+    function formatApiDetail(detail, fallback) {
+      if (!detail) return fallback;
+      if (typeof detail === 'string') return detail;
+      if (Array.isArray(detail)) {
+        return detail.map(item => item?.msg || item?.message || JSON.stringify(item)).join(' ');
+      }
+      return detail.message || detail.msg || fallback;
+    }
+
+    function setAuthMessage(message, type = 'error') {
+      const err = document.getElementById('loginError');
+      err.textContent = message;
+      err.classList.toggle('success', type === 'success');
+      err.classList.add('show');
+    }
+
+    function clearAuthError() {
+      const err = document.getElementById('loginError');
+      err.textContent = '';
+      err.classList.remove('success');
+      err.classList.remove('show');
+    }
+
+    function showAuthMode(mode) {
+      clearAuthError();
+      const isRegister = mode === 'register';
+      document.getElementById('loginForm').classList.toggle('hidden', isRegister);
+      document.getElementById('registerForm').classList.toggle('hidden', !isRegister);
+      document.getElementById('loginTab').classList.toggle('active', !isRegister);
+      document.getElementById('registerTab').classList.toggle('active', isRegister);
+      document.getElementById('authTitle').textContent = isRegister ? 'Crea tu cuenta' : 'Bienvenido';
+      document.getElementById('authSubtitle').textContent = isRegister
+        ? 'Regístrate para consultar el catálogo y tus préstamos'
+        : 'Ingresa tus credenciales para continuar';
+    }
+
     async function doLogin() {
       const btn = document.getElementById('loginBtn');
-      const err = document.getElementById('loginError');
-      err.classList.remove('show');
+      clearAuthError();
       btn.disabled = true;
       btn.textContent = 'Ingresando…';
       try {
@@ -60,10 +133,44 @@
         setSession(data);
         window.location.href = resolvePageUrl(isAdmin() ? 'admin-dashboard.html' : 'usuario.html');
       } catch (e) {
-        err.textContent = e.detail || 'Credenciales incorrectas';
-        err.classList.add('show');
+        setAuthMessage(formatApiDetail(e.detail, 'Credenciales incorrectas'));
         btn.disabled = false;
         btn.innerHTML = '<i class="ti ti-login"></i> Iniciar sesión';
+      }
+    }
+
+    async function doRegister() {
+      const btn = document.getElementById('registerBtn');
+      clearAuthError();
+      const payload = {
+        full_name: document.getElementById('registerFullName').value.trim(),
+        username: document.getElementById('registerUsername').value.trim(),
+        email: document.getElementById('registerEmail').value.trim(),
+        phone: document.getElementById('registerPhone').value.trim() || null,
+        password: document.getElementById('registerPassword').value
+      };
+
+      if (!payload.full_name || !payload.username || !payload.email || !payload.password) {
+        setAuthMessage('Completa nombre, usuario, correo y contraseña.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creando cuenta…';
+      try {
+        await apiFetch('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        showAuthMode('login');
+        document.getElementById('username').value = payload.username;
+        document.getElementById('password').value = '';
+        setAuthMessage('Cuenta creada. Ahora puedes iniciar sesión.', 'success');
+      } catch (e) {
+        setAuthMessage(formatApiDetail(e.detail, 'No se pudo crear la cuenta.'));
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-user-plus"></i> Crear cuenta';
       }
     }
   </script>
