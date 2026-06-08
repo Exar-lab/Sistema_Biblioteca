@@ -6,6 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.domain.models.user import LibraryUser
+from app.domain.models.types import bool_to_oracle_char
 from app.application.ports.user_repository import UserRepository as UserRepositoryPort
 
 
@@ -42,7 +43,7 @@ class UserRepository:
                     data.email,
                     data.phone,
                     data.password_hash,
-                    "Y" if data.is_active else "N",
+                    bool_to_oracle_char(data.is_active),
                     data.role_id,
                     out_id,
                 ],
@@ -66,7 +67,7 @@ class UserRepository:
                 "p_email": data.email,
                 "p_phone": data.phone,
                 "p_password_hash": data.password_hash,
-                "p_is_active": data.is_active,
+                "p_is_active": bool_to_oracle_char(data.is_active),
                 "p_role_id": data.role_id,
             },
         )
