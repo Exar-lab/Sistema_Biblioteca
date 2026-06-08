@@ -31,18 +31,43 @@
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header">
           <span class="card-title">Mis préstamos activos</span>
-          <a href="catalogo.html" class="btn btn-primary btn-sm"><i class="ti ti-books"></i> Ver catálogo</a>
+          <button class="btn btn-primary btn-sm" onclick="openLoanModal()"><i class="ti ti-plus"></i> Solicitar préstamo</button>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Libro</th><th>Fecha préstamo</th><th>Vence</th><th>Días restantes</th><th>Estado</th></tr></thead>
-            <tbody id="activeLoansBody"><tr><td colspan="5" class="loading">Cargando…</td></tr></tbody>
+            <thead><tr><th>Libro</th><th>Fecha préstamo</th><th>Vence</th><th>Días restantes</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="activeLoansBody"><tr><td colspan="6" class="loading">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Modal solicitar préstamo -->
+<div class="modal-overlay" id="loanModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title">Solicitar préstamo</span>
+      <button class="modal-close" onclick="closeLoanModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="padding:20px 24px;">
+      <div style="position:relative;margin-bottom:16px;">
+        <i class="ti ti-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:15px;pointer-events:none;"></i>
+        <input type="text" id="loanBookSearch" placeholder="Buscar libro por título…"
+          oninput="filterLoanBooks()"
+          style="width:100%;padding:9px 12px 9px 36px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:var(--font-body);font-size:0.875rem;color:var(--text);outline:none;box-sizing:border-box;"/>
+      </div>
+      <div id="loanBookList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+        <div class="loading">Cargando libros…</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLoanModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script src="../js/api.js"></script>
 <script src="../js/sidebar.js"></script>
 <script>
@@ -89,12 +114,96 @@
           <td>${formatDate(l.due_date)}</td>
           <td>${diffLabel}</td>
           <td><span class="badge ${l.status==='OVERDUE'?'badge-overdue':'badge-active'}">${l.status==='OVERDUE'?'Vencido':'Activo'}</span></td>
+          <td><button class="btn btn-secondary btn-sm" onclick="returnLoan(${l.id}, this)"><i class="ti ti-arrow-back-up"></i> Devolver</button></td>
         </tr>`;
       }).join('');
     } catch(e) { showToast('Error al cargar perfil','error'); }
   }
 
+  function returnLoan(loanId, btn) {
+    confirm('Devolver libro', '¿Confirmar la devolución del libro?', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Devolviendo…';
+      try {
+        await apiFetch(`/loans/${loanId}/return`, { method: 'PATCH' });
+        showToast('Libro devuelto correctamente');
+        loadLoans();
+      } catch(e) {
+        showToast(e.detail || 'Error al devolver el libro', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-arrow-back-up"></i> Devolver';
+      }
+    });
+  }
+
   loadLoans();
+
+  // --- Loan request modal ---
+  let availableBooks = [];
+
+  async function openLoanModal() {
+    document.getElementById('loanBookSearch').value = '';
+    document.getElementById('loanModal').classList.add('open');
+    if (!availableBooks.length) {
+      try {
+        const books = await apiFetch('/books/');
+        availableBooks = books.filter(b => b.is_active && b.stock_available > 0);
+      } catch {
+        showToast('Error al cargar libros', 'error');
+        return;
+      }
+    }
+    renderLoanBooks(availableBooks);
+  }
+
+  function closeLoanModal() {
+    document.getElementById('loanModal').classList.remove('open');
+  }
+
+  function filterLoanBooks() {
+    const q = document.getElementById('loanBookSearch').value.toLowerCase();
+    renderLoanBooks(availableBooks.filter(b => b.title.toLowerCase().includes(q)));
+  }
+
+  function renderLoanBooks(list) {
+    const container = document.getElementById('loanBookList');
+    if (!list.length) {
+      container.innerHTML = '<div class="empty-state"><i class="ti ti-books"></i><p>Sin libros disponibles</p></div>';
+      return;
+    }
+    container.innerHTML = list.map(b => {
+      const authors = (b.authors || []).map(a => `${a.first_name} ${a.last_name}`).join(', ') || '—';
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">
+          <div style="min-width:0;">
+            <div style="font-size:0.875rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.title)}</div>
+            <div style="font-size:0.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(authors)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span style="font-size:0.72rem;color:var(--success);font-weight:600;">${b.stock_available} disp.</span>
+            <button class="btn btn-primary btn-sm" onclick="requestLoan(${b.id}, this)">
+              <i class="ti ti-book-upload"></i> Solicitar
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function requestLoan(bookId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Procesando…';
+    try {
+      await apiFetch('/loans/me', { method: 'POST', body: JSON.stringify({ book_id: bookId }) });
+      showToast('Préstamo solicitado correctamente');
+      closeLoanModal();
+      availableBooks = [];
+      loadLoans();
+    } catch(e) {
+      showToast(e.detail || 'Error al solicitar el préstamo', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-book-upload"></i> Solicitar';
+    }
+  }
 </script>
 </body>
 </html>
