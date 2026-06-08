@@ -83,6 +83,7 @@ class FakeBookRepository:
             )
         }
         self.next_id = 2
+        self.set_author_calls: list[tuple[int, list[int]]] = []
 
     def get_by_id(self, _session: Any, id: int) -> BookStub | None:
         return self.items.get(id)
@@ -90,15 +91,22 @@ class FakeBookRepository:
     def get_with_authors(self, _session: Any, id: int) -> BookStub | None:
         return self.items.get(id)
 
-    def list_all(self, _session: Any) -> list[BookStub]:
+    def list_all(
+        self,
+        _session: Any,
+        *,
+        title: str | None = None,
+        author: str | None = None,
+        category: str | None = None,
+    ) -> list[BookStub]:
         return list(self.items.values())
 
     def create(self, _session: Any, data: BookCreate) -> BookStub:
         values = data.model_dump()
-        author_ids = values.pop("author_ids")
+        values.pop("author_ids")
         values["stock_available"] = values["stock_total"]
         book = BookStub(id=self.next_id, **values)
-        self._assign_relationships(book, author_ids)
+        book.category = self.categories.get(book.category_id) if book.category_id is not None else None
         self.items[book.id] = book
         self.next_id += 1
         return book
@@ -108,14 +116,12 @@ class FakeBookRepository:
         if book is None:
             return None
         values = data.model_dump(exclude_unset=True)
-        author_ids = values.pop("author_ids", None)
+        values.pop("author_ids", None)
         new_stock_total = values.get("stock_total")
         if new_stock_total is not None and book.stock_available > new_stock_total:
             book.stock_available = new_stock_total
         for field_name, value in values.items():
             setattr(book, field_name, value)
-        if author_ids is not None:
-            self._assign_relationships(book, author_ids)
         if "category_id" in values:
             book.category = self.categories.get(book.category_id) if book.category_id is not None else None
         return book
@@ -124,6 +130,7 @@ class FakeBookRepository:
         return self.items.pop(id, None) is not None
 
     def set_authors(self, _session: Any, book_id: int, author_ids: list[int]) -> None:
+        self.set_author_calls.append((book_id, author_ids))
         book = self.items.get(book_id)
         if book is None:
             raise NotFoundError("Book not found.")
@@ -189,7 +196,8 @@ def test_book_service_raises_not_found_for_missing_book() -> None:
 
 
 def test_book_service_creates_book_and_assigns_unique_authors() -> None:
-    service = BookService(FakeBookRepository())
+    repository = FakeBookRepository()
+    service = BookService(repository)
 
     book = service.create_book(
         object(),
@@ -200,15 +208,18 @@ def test_book_service_creates_book_and_assigns_unique_authors() -> None:
     assert book.title == "La invención de Morel"
     assert book.stock_total == 2
     assert book.stock_available == 2
+    assert repository.set_author_calls == [(2, [2, 2])]
     assert [author.id for author in book.authors] == [2]
 
 
 def test_book_service_updates_author_relationships_when_supplied() -> None:
-    service = BookService(FakeBookRepository())
+    repository = FakeBookRepository()
+    service = BookService(repository)
 
     book = service.update_book(object(), 1, BookUpdate(title="Ficciones corregidas", author_ids=[2]))
 
     assert book.title == "Ficciones corregidas"
+    assert repository.set_author_calls == [(1, [2])]
     assert [author.id for author in book.authors] == [2]
 
 

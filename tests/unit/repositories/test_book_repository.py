@@ -9,6 +9,7 @@ from sqlalchemy.sql.selectable import Select
 
 from app.domain.models.book import Book
 from app.infrastructure.repositories.book_repository import BookRepository
+from app.schemas.catalog.books import BookUpdate
 
 
 # ---------------------------------------------------------------------------
@@ -57,20 +58,19 @@ def fake_create_data() -> MagicMock:
 
 
 @pytest.fixture()
-def fake_update_data() -> MagicMock:
-    d = MagicMock()
-    d.title = "Updated Title"
-    d.isbn = "978-0-06-088328-7"
-    d.description = "Updated description"
-    d.publication_date = datetime.date(1967, 6, 5)
-    d.publisher = "Harper"
-    d.edition = "2nd"
-    d.pages = 420
-    d.stock_total = 5
-    d.stock_available = 5
-    d.is_active = True
-    d.category_id = 1
-    return d
+def fake_update_data() -> BookUpdate:
+    return BookUpdate(
+        title="Updated Title",
+        isbn="978-0-06-088328-7",
+        description="Updated description",
+        publication_date=datetime.date(1967, 6, 5),
+        publisher="Harper",
+        edition="2nd",
+        pages=420,
+        stock_total=5,
+        is_active=True,
+        category_id=1,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +139,7 @@ def test_create_binds_correct_params(
         fake_create_data.edition,
         fake_create_data.pages,
         fake_create_data.stock_total,
-        fake_create_data.stock_available,
+        fake_create_data.stock_total,
         fake_create_data.is_active,
         fake_create_data.category_id,
         mock_cursor.var.return_value,
@@ -176,11 +176,92 @@ def test_update_calls_p_update(
     repo.update(mock_session, 20, fake_update_data)
 
     assert mock_session.execute.called
-    first_call = mock_session.execute.call_args_list[0]
-    sql_text = str(first_call[0][0])
+    update_call = mock_session.execute.call_args_list[1]
+    sql_text = str(update_call[0][0])
     assert "p_update" in sql_text
-    binds = first_call[0][1]
+    binds = update_call[0][1]
     assert binds["p_id"] == 20
+
+
+def test_update_preserves_existing_values_for_partial_payload(
+    mock_session: MagicMock,
+    fake_book: Book,
+) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_book
+
+    repo = BookRepository()
+    repo.update(mock_session, 20, BookUpdate(author_ids=[1]))
+
+    binds = mock_session.execute.call_args_list[1][0][1]
+    assert binds["p_title"] == fake_book.title
+    assert binds["p_isbn"] == fake_book.isbn
+    assert binds["p_description"] == fake_book.description
+    assert binds["p_publication_date"] == fake_book.publication_date
+    assert binds["p_publisher"] == fake_book.publisher
+    assert binds["p_edition"] == fake_book.edition
+    assert binds["p_pages"] == fake_book.pages
+    assert binds["p_stock_total"] == fake_book.stock_total
+    assert binds["p_stock_available"] == fake_book.stock_available
+    assert binds["p_is_active"] == fake_book.is_active
+    assert binds["p_category_id"] == fake_book.category_id
+
+
+def test_update_ignores_explicit_nulls_for_optional_scalar_fields(
+    mock_session: MagicMock,
+    fake_book: Book,
+) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_book
+
+    repo = BookRepository()
+    repo.update(
+        mock_session,
+        20,
+        BookUpdate(
+            isbn=None,
+            description=None,
+            publication_date=None,
+            publisher=None,
+            edition=None,
+            pages=None,
+            stock_total=None,
+            category_id=None,
+        ),
+    )
+
+    binds = mock_session.execute.call_args_list[1][0][1]
+    assert binds["p_isbn"] == fake_book.isbn
+    assert binds["p_description"] == fake_book.description
+    assert binds["p_publication_date"] == fake_book.publication_date
+    assert binds["p_publisher"] == fake_book.publisher
+    assert binds["p_edition"] == fake_book.edition
+    assert binds["p_pages"] == fake_book.pages
+    assert binds["p_stock_total"] == fake_book.stock_total
+    assert binds["p_stock_available"] == fake_book.stock_available
+    assert binds["p_category_id"] == fake_book.category_id
+
+
+def test_update_clamps_available_stock_when_total_is_reduced(
+    mock_session: MagicMock,
+    fake_book: Book,
+) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_book
+
+    repo = BookRepository()
+    repo.update(mock_session, 20, BookUpdate(stock_total=2))
+
+    binds = mock_session.execute.call_args_list[1][0][1]
+    assert binds["p_stock_total"] == 2
+    assert binds["p_stock_available"] == 2
+
+
+def test_update_returns_none_when_book_does_not_exist(mock_session: MagicMock) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = None
+
+    repo = BookRepository()
+    result = repo.update(mock_session, 999, BookUpdate(title="Missing"))
+
+    assert result is None
+    assert len(mock_session.execute.call_args_list) == 1
 
 
 # ---------------------------------------------------------------------------
