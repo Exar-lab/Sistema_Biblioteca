@@ -107,9 +107,25 @@ def test_create_binds_correct_params(
     assert bind_args == [
         fake_create_data.name,
         fake_create_data.description,
-        fake_create_data.is_active,
+        "Y",
         mock_cursor.var.return_value,
     ]
+
+
+def test_create_binds_inactive_bool_as_oracle_char(
+    mock_session: MagicMock,
+    fake_category: Category,
+    fake_create_data: MagicMock,
+) -> None:
+    mock_cursor = _setup_cursor(mock_session, out_value=10)
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_category
+    fake_create_data.is_active = False
+
+    repo = CategoryRepository()
+    repo.create(mock_session, fake_create_data)
+
+    bind_args = mock_cursor.callproc.call_args[0][1]
+    assert bind_args[2] == "N"
 
 
 def test_create_no_commit(
@@ -147,6 +163,22 @@ def test_update_calls_p_update(
     assert "p_update" in sql_text
     binds = first_call[0][1]
     assert binds["p_id"] == 10
+    assert binds["p_is_active"] == "Y"
+
+
+def test_update_binds_inactive_bool_as_oracle_char(
+    mock_session: MagicMock,
+    fake_category: Category,
+    fake_update_data: MagicMock,
+) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_category
+    fake_update_data.is_active = False
+
+    repo = CategoryRepository()
+    repo.update(mock_session, 10, fake_update_data)
+
+    binds = mock_session.execute.call_args_list[0][0][1]
+    assert binds["p_is_active"] == "N"
 
 
 # ---------------------------------------------------------------------------

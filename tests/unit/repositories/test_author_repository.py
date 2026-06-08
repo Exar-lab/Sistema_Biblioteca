@@ -120,9 +120,25 @@ def test_create_binds_correct_params(
         fake_create_data.biography,
         fake_create_data.birth_date,
         fake_create_data.death_date,
-        fake_create_data.is_active,
+        "Y",
         mock_cursor.var.return_value,
     ]
+
+
+def test_create_binds_inactive_bool_as_oracle_char(
+    mock_session: MagicMock,
+    fake_author: Author,
+    fake_create_data: MagicMock,
+) -> None:
+    mock_cursor = _setup_cursor(mock_session, out_value=7)
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_author
+    fake_create_data.is_active = False
+
+    repo = AuthorRepository()
+    repo.create(mock_session, fake_create_data)
+
+    bind_args = mock_cursor.callproc.call_args[0][1]
+    assert bind_args[5] == "N"
 
 
 def test_create_no_commit(
@@ -160,6 +176,22 @@ def test_update_calls_p_update(
     assert "p_update" in sql_text
     binds = first_call[0][1]
     assert binds["p_id"] == 7
+    assert binds["p_is_active"] == "Y"
+
+
+def test_update_binds_inactive_bool_as_oracle_char(
+    mock_session: MagicMock,
+    fake_author: Author,
+    fake_update_data: MagicMock,
+) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_author
+    fake_update_data.is_active = False
+
+    repo = AuthorRepository()
+    repo.update(mock_session, 7, fake_update_data)
+
+    binds = mock_session.execute.call_args_list[0][0][1]
+    assert binds["p_is_active"] == "N"
 
 
 # ---------------------------------------------------------------------------
