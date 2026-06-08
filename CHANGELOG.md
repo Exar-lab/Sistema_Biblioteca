@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.2](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.1...sistema-biblioteca-v0.12.2) (2026-06-08)
+
+
+### Bug Fixes
+
+* **catalog:** preserve book authors and partial updates ([bf779fe](https://github.com/Exar-lab/Sistema_Biblioteca/commit/bf779fe5cf388fac1892bc4477374f3520a53035))
+* **catalog:** preserve book authors and partial updates ([1f13386](https://github.com/Exar-lab/Sistema_Biblioteca/commit/1f133863d40713d490bfce2421559ea23863cf51))
+
 ## [0.12.1](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.0...sistema-biblioteca-v0.12.1) (2026-06-08)
 
 
