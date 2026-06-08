@@ -11,6 +11,14 @@ from app.domain.models.category import Category
 from app.application.ports.book_repository import BookRepository as BookRepositoryPort
 
 
+def _bool_to_oracle_char(value: bool | None) -> str | None:
+    """Convert Python booleans to the CHAR(1) values expected by Oracle packages."""
+
+    if value is None:
+        return None
+    return "Y" if value else "N"
+
+
 class BookRepository:
     """Concrete implementation of BookRepositoryPort backed by Oracle.
 
@@ -80,7 +88,7 @@ class BookRepository:
                     data.pages,
                     data.stock_total,
                     data.stock_total,  # stock_available starts equal to stock_total on creation
-                    data.is_active,
+                    _bool_to_oracle_char(data.is_active),
                     data.category_id,
                     out_id,
                 ],
@@ -116,7 +124,7 @@ class BookRepository:
                 "p_pages": values.get("pages", current.pages),
                 "p_stock_total": stock_total,
                 "p_stock_available": stock_available,
-                "p_is_active": values.get("is_active", current.is_active),
+                "p_is_active": _bool_to_oracle_char(values.get("is_active", current.is_active)),
                 "p_category_id": values.get("category_id", current.category_id),
             },
         )

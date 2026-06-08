@@ -140,10 +140,26 @@ def test_create_binds_correct_params(
         fake_create_data.pages,
         fake_create_data.stock_total,
         fake_create_data.stock_total,
-        fake_create_data.is_active,
+        "Y",
         fake_create_data.category_id,
         mock_cursor.var.return_value,
     ]
+
+
+def test_create_binds_inactive_bool_as_oracle_char(
+    mock_session: MagicMock,
+    fake_book: Book,
+    fake_create_data: MagicMock,
+) -> None:
+    mock_cursor = _setup_cursor(mock_session, out_value=20)
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_book
+    fake_create_data.is_active = False
+
+    repo = BookRepository()
+    repo.create(mock_session, fake_create_data)
+
+    bind_args = mock_cursor.callproc.call_args[0][1]
+    assert bind_args[9] == "N"
 
 
 def test_create_no_commit(
@@ -181,6 +197,20 @@ def test_update_calls_p_update(
     assert "p_update" in sql_text
     binds = update_call[0][1]
     assert binds["p_id"] == 20
+    assert binds["p_is_active"] == "Y"
+
+
+def test_update_binds_inactive_bool_as_oracle_char(
+    mock_session: MagicMock,
+    fake_book: Book,
+) -> None:
+    mock_session.execute.return_value.scalar_one_or_none.return_value = fake_book
+
+    repo = BookRepository()
+    repo.update(mock_session, 20, BookUpdate(is_active=False))
+
+    binds = mock_session.execute.call_args_list[1][0][1]
+    assert binds["p_is_active"] == "N"
 
 
 def test_update_preserves_existing_values_for_partial_payload(
@@ -202,7 +232,7 @@ def test_update_preserves_existing_values_for_partial_payload(
     assert binds["p_pages"] == fake_book.pages
     assert binds["p_stock_total"] == fake_book.stock_total
     assert binds["p_stock_available"] == fake_book.stock_available
-    assert binds["p_is_active"] == fake_book.is_active
+    assert binds["p_is_active"] == "Y"
     assert binds["p_category_id"] == fake_book.category_id
 
 
