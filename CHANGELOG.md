@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.1](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.0...sistema-biblioteca-v0.12.1) (2026-06-08)
+
+
+### Bug Fixes
+
+* **catalog:** resolve stock_available AttributeError and missing confirm dialog ([7cf002f](https://github.com/Exar-lab/Sistema_Biblioteca/commit/7cf002fd3e8dd18728be00312009e31786548fc0))
+* **catalog:** resolve stock_available AttributeError and missing confirm dialog ([90e6f2a](https://github.com/Exar-lab/Sistema_Biblioteca/commit/90e6f2aef16cee5e864cfc099677cc2aa36eb4ba))
+
 ## [0.12.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.11.0...sistema-biblioteca-v0.12.0) (2026-06-08)
 
 
