@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.10.2...sistema-biblioteca-v0.11.0) (2026-06-08)
+
+
+### Features
+
+* **frontend:** refresh login and registration UI ([453d28f](https://github.com/Exar-lab/Sistema_Biblioteca/commit/453d28fb84b9d7647a43a9abdd02e4b112745295))
+* **frontend:** refresh login and registration UI ([fa8f242](https://github.com/Exar-lab/Sistema_Biblioteca/commit/fa8f242feb77a20e31c3cac99d40718ee5b79515))
+* **seed:** add deterministic demo data ([df871f2](https://github.com/Exar-lab/Sistema_Biblioteca/commit/df871f210d9e2fcad6b287d50842135e489d2623))
+* **seed:** add deterministic demo data ([a59c767](https://github.com/Exar-lab/Sistema_Biblioteca/commit/a59c767683a2e9aef659215bc4d9472376a159fe))
+
 ## [0.10.2](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.10.1...sistema-biblioteca-v0.10.2) (2026-06-07)
 
 
