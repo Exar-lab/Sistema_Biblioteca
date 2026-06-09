@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.4](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.3...sistema-biblioteca-v0.12.4) (2026-06-08)
+
+
+### Bug Fixes
+
+* **users:** bind active flag for Oracle updates ([995676a](https://github.com/Exar-lab/Sistema_Biblioteca/commit/995676a66e92fd18dd3847f30e68b1718dafe856))
+* **users:** bind active flag for Oracle updates ([db601d3](https://github.com/Exar-lab/Sistema_Biblioteca/commit/db601d3a5c49f73bc0c782adc559b61bf719862c))
+
 ## [0.12.3](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.2...sistema-biblioteca-v0.12.3) (2026-06-08)
 
 
