@@ -43,7 +43,16 @@
       <div class="form-group"><label>Nombre *</label><input id="fFirst" placeholder="Nombre"/></div>
       <div class="form-group"><label>Apellido *</label><input id="fLast" placeholder="Apellido"/></div>
       <div class="form-group"><label>Fecha nacimiento</label><input id="fBirth" type="date"/></div>
-      <div class="form-group"><label>Fecha fallecimiento</label><input id="fDeath" type="date"/></div>
+      <div class="form-group author-death-group">
+        <label for="fDeath">Fecha fallecimiento</label>
+        <div class="death-date-row">
+          <input id="fDeath" type="date" disabled/>
+          <label class="deceased-check" for="fIsDeceased">
+            <input id="fIsDeceased" type="checkbox" onchange="toggleDeathDate()"/>
+            <span>Fallecido</span>
+          </label>
+        </div>
+      </div>
       <div class="form-group form-full"><label>Biografía</label><textarea id="fBio" placeholder="Breve biografía…"></textarea></div>
     </div>
     <div class="modal-footer">
@@ -88,12 +97,16 @@
   function openModal(id = null) {
     editingId = id;
     ['fFirst','fLast','fBirth','fDeath','fBio'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('fIsDeceased').checked = false;
+    toggleDeathDate();
     document.getElementById('modalTitle').textContent = id ? 'Editar autor' : 'Nuevo autor';
     if (id) {
       const a = allItems.find(x => x.id === id);
       document.getElementById('fFirst').value = a.first_name;
       document.getElementById('fLast').value = a.last_name;
       document.getElementById('fBirth').value = a.birth_date || '';
+      document.getElementById('fIsDeceased').checked = Boolean(a.death_date);
+      toggleDeathDate();
       document.getElementById('fDeath').value = a.death_date || '';
       document.getElementById('fBio').value = a.biography || '';
     }
@@ -102,11 +115,20 @@
 
   function closeModal() { document.getElementById('itemModal').classList.remove('open'); }
 
+  function toggleDeathDate() {
+    const isDeceased = document.getElementById('fIsDeceased').checked;
+    const deathInput = document.getElementById('fDeath');
+    deathInput.disabled = !isDeceased;
+    if (!isDeceased) deathInput.value = '';
+  }
+
   async function saveItem() {
     const first = document.getElementById('fFirst').value.trim();
     const last  = document.getElementById('fLast').value.trim();
     if (!first || !last) { showToast('Nombre y apellido son obligatorios','warning'); return; }
-    const payload = { first_name: first, last_name: last, birth_date: document.getElementById('fBirth').value || null, death_date: document.getElementById('fDeath').value || null, biography: document.getElementById('fBio').value.trim() || null, is_active: true };
+    const isDeceased = document.getElementById('fIsDeceased').checked;
+    const deathDate = isDeceased ? document.getElementById('fDeath').value || null : null;
+    const payload = { first_name: first, last_name: last, birth_date: document.getElementById('fBirth').value || null, death_date: deathDate, biography: document.getElementById('fBio').value.trim() || null, is_active: true };
     try {
       if (editingId) { await apiFetch(`/authors/${editingId}`, { method:'PATCH', body: JSON.stringify(payload) }); showToast('Autor actualizado'); }
       else { await apiFetch('/authors/', { method:'POST', body: JSON.stringify(payload) }); showToast('Autor creado'); }

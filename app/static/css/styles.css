@@ -185,6 +185,10 @@ label { font-size: 0.78rem; font-weight: 500; color: var(--text-2); font-family:
 input, select, textarea { padding: 10px 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: var(--font-body); color: var(--text); background: var(--surface); transition: border-color 0.15s; outline: none; width: 100%; }
 input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(184,136,42,0.14); }
 textarea { resize: vertical; min-height: 80px; }
+.death-date-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.deceased-check { min-height: 39px; padding: 0 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer; }
+.deceased-check input { width: auto; accent-color: var(--accent); cursor: pointer; }
+.author-death-group input[type="date"]:disabled { background: var(--surface-2); color: var(--text-3); cursor: not-allowed; }
 
 /* ── MODAL ───────────────────────────────── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(18,11,5,0.52); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
