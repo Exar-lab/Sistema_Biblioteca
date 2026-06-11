@@ -47,8 +47,8 @@
   renderSidebar('dashboard');
   document.getElementById('roleBadge').textContent = getUser()?.role?.name || 'Admin';
 
-  const BRAND = '#1a6b4a', ACCENT = '#c8773a', WARN = '#d97706';
-  const GREENS = ['#1a6b4a','#2e8c63','#3fa87a','#5abf8e','#7dd0a5','#a0dfc0','#c8f0db'];
+  const BRAND = '#7c1d2c', ACCENT = '#b8882a', WARN = '#8b5e10';
+  const GREENS = ['#4a0f18','#7c1d2c','#a03040','#b8882a','#7a4b12','#243b2b','#5c7a46'];
 
   async function loadDashboard() {
     const data = await apiFetch('/reports/dashboard');
@@ -71,7 +71,7 @@
   }
 
   function chartOpts(title) {
-    return { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'DM Sans' } } }, scales: { x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 11 } } }, y: { grid: { color: '#f0eeea' }, ticks: { font: { family: 'DM Sans', size: 11 }, precision: 0 } } } };
+    return { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'EB Garamond' } } }, scales: { x: { grid: { display: false }, ticks: { font: { family: 'EB Garamond', size: 12 } } }, y: { grid: { color: '#e4d8b8' }, ticks: { font: { family: 'EB Garamond', size: 12 }, precision: 0 } } } };
   }
 
   function renderTopBooks(books) {
