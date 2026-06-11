@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentación de Base de Datos — Sistema Biblioteca</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;0,7..72,600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand: #2c5f2e;
+    --brand-dark: #1a3a1c;
+    --accent: #c9972a;
+    --bg: #f5efe0;
+    --surface: #fffef9;
+    --border: #e0d5c0;
+    --text: #1e1a14;
+    --text-2: #5a4e3c;
+    --text-3: #9a8e7a;
+    --font-display: 'Literata', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html { font-size: 15px; scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--text);
+    background: linear-gradient(135deg, #fdf8f0 0%, var(--bg) 52%, #ede3cc 100%);
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .layout { display: flex; }
+
+  .sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #0d1f0e 0%, #162a18 52%, #091408 100%);
+    position: fixed; top: 0; left: 0; height: 100vh;
+    overflow-y: auto; padding: 0;
+    box-shadow: 4px 0 24px rgba(10,20,10,0.22);
+    border-right: 1px solid rgba(201,151,42,0.14);
+    z-index: 10;
+  }
+
+  .sidebar-brand {
+    padding: 28px 22px 20px;
+    border-bottom: 1px solid rgba(201,151,42,0.18);
+  }
+  .sidebar-brand h1 {
+    font-family: var(--font-display);
+    font-size: 1.1rem; font-weight: 600; color: #f5e9c8; line-height: 1.3;
+  }
+  .sidebar-brand span {
+    font-size: 0.68rem; color: rgba(245,233,200,0.50);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .nav-section {
+    padding: 18px 0 4px;
+  }
+  .nav-section-label {
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em;
+    color: rgba(201,151,42,0.55); text-transform: uppercase;
+    padding: 0 22px 6px;
+  }
+  .sidebar a {
+    display: block; padding: 9px 22px; color: rgba(245,233,200,0.65);
+    text-decoration: none; font-size: 0.82rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar a:hover {
+    color: #f5e9c8;
+    background: rgba(201,151,42,0.08);
+    border-left-color: rgba(201,151,42,0.4);
+  }
+  .sidebar a.active {
+    color: #f5e9c8; font-weight: 600;
+    background: rgba(201,151,42,0.14);
+    border-left-color: var(--accent);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 260px; flex: 1; min-height: 100vh;
+  }
+
+  .topbar {
+    background: rgba(255,254,249,0.9);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .topbar h2 {
+    font-family: var(--font-display); font-size: 1.35rem;
+    font-weight: 500; color: var(--brand-dark);
+  }
+  .topbar .badge {
+    background: var(--accent); color: #fff;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 3px 10px; border-radius: 999px;
+  }
+
+  .content { padding: 40px; max-width: 1100px; }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 56px;
+    scroll-margin-top: 80px;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-header .icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--brand), #4a8c4d);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #fff; flex-shrink: 0;
+  }
+  .section-header .icon.accent {
+    background: linear-gradient(135deg, var(--accent), #a87820);
+  }
+  .section-header .icon.purple {
+    background: linear-gradient(135deg, #6b4c9a, #9b6dd6);
+  }
+  .section-header .icon.red {
+    background: linear-gradient(135deg, #9a2c2c, #c94a4a);
+  }
+  .section-header h2 {
+    font-family: var(--font-display); font-size: 1.5rem;
+    font-weight: 500; color: var(--brand-dark);
+  }
+  .section-header p {
+    font-size: 0.82rem; color: var(--text-3); margin-top: 2px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px 26px;
+    box-shadow: 0 6px 20px rgba(26,58,28,0.07);
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: var(--font-display); font-size: 1rem;
+    font-weight: 500; margin-bottom: 12px; color: var(--brand-dark);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+
+  /* ── PACKAGE GRID ── */
+  .pkg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+  .pkg-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 14px rgba(26,58,28,0.06);
+  }
+  .pkg-header {
+    padding: 14px 18px; background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+    color: #f5e9c8;
+  }
+  .pkg-header h3 {
+    font-family: var(--font-mono); font-size: 0.88rem; font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .pkg-header span { font-size: 0.72rem; opacity: 0.70; }
+  .pkg-body { padding: 14px 18px; }
+
+  .proc-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+  .proc-item:last-child { border-bottom: none; }
+  .proc-name {
+    font-family: var(--font-mono); font-size: 0.78rem;
+    color: var(--brand); font-weight: 500; min-width: 110px; flex-shrink: 0;
+  }
+  .proc-desc { color: var(--text-2); line-height: 1.5; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.855rem; }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--brand-dark);
+    border-bottom: 2px solid var(--border);
+    background: rgba(248,244,236,0.8);
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text-2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(201,151,42,0.05); }
+
+  code {
+    font-family: var(--font-mono); font-size: 0.8em;
+    background: rgba(44,95,46,0.10); color: var(--brand);
+    padding: 2px 6px; border-radius: 5px;
+  }
+  .tag {
+    display: inline-block; font-size: 0.68rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px; text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag-trigger { background: rgba(107,28,55,0.12); color: #6b1c37; }
+  .tag-package { background: rgba(44,95,46,0.12); color: var(--brand); }
+  .tag-seq     { background: rgba(201,151,42,0.14); color: #7a5820; }
+  .tag-index   { background: rgba(60,80,150,0.12); color: #304096; }
+
+  /* ── DIAGRAM ── */
+  .diagram-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+    box-shadow: 0 6px 20px rgba(26,58,28,0.07);
+    overflow-x: auto; margin-bottom: 20px;
+  }
+  .diagram-wrap h3 {
+    font-family: var(--font-display); font-size: 0.92rem;
+    color: var(--text-2); margin-bottom: 18px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .mermaid { text-align: center; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 4px solid var(--accent); background: var(--accent-light, #fef8e7);
+    border-radius: 0 12px 12px 0; padding: 14px 18px;
+    font-size: 0.875rem; color: var(--text-2); margin-bottom: 16px;
+    background: rgba(201,151,42,0.07);
+  }
+  .callout strong { color: var(--text); }
+  .callout.green { border-left-color: var(--brand); background: rgba(44,95,46,0.06); }
+  .callout.red   { border-left-color: #b83232; background: rgba(184,50,50,0.06); }
+
+  /* ── FILE PATH ── */
+  .file-path {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(26,58,28,0.08); border: 1px solid rgba(44,95,46,0.20);
+    border-radius: 8px; padding: 4px 10px;
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--brand);
+  }
+
+  /* ── FLOW STEPS ── */
+  .flow-steps { display: flex; flex-direction: column; gap: 0; }
+  .flow-step {
+    display: flex; gap: 14px; position: relative;
+  }
+  .flow-step:not(:last-child)::before {
+    content: ''; position: absolute; left: 17px; top: 36px;
+    width: 2px; height: calc(100% + 0px); background: var(--border);
+  }
+  .step-num {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--brand), #4a8c4d);
+    color: #fff; font-size: 0.78rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+    box-shadow: 0 4px 12px rgba(44,95,46,0.22);
+  }
+  .step-body { padding: 6px 0 20px; }
+  .step-body h4 { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .step-body p  { font-size: 0.82rem; color: var(--text-2); line-height: 1.6; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .content { padding: 20px; }
+    .pkg-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <h1>📚 Sistema Biblioteca</h1>
+    <span>Documentación DB · Oracle 21c XE</span>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Visión general</div>
+    <a href="#overview">Arquitectura general</a>
+    <a href="#er-diagram">Diagrama ER</a>
+    <a href="#tables">Tablas</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Objetos PL/SQL</div>
+    <a href="#packages">Packages y Procedures</a>
+    <a href="#triggers">Triggers</a>
+    <a href="#sequences">Sequences</a>
+    <a href="#indexes">Índices</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Flujos de negocio</div>
+    <a href="#flow-loan">Flujo: Crear préstamo</a>
+    <a href="#flow-return">Flujo: Devolver libro</a>
+    <a href="#flow-cancel">Flujo: Cancelar préstamo</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Referencia</div>
+    <a href="#file-location">Ubicación del archivo</a>
+    <a href="#exec-guide">Guía de ejecución</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="topbar">
+    <h2>Documentación de Base de Datos</h2>
+    <span class="badge">Oracle 21c XE · XEPDB1</span>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <div class="icon">🏛️</div>
+        <div>
+          <h2>Arquitectura general</h2>
+          <p>Esquema BIBLIOTECA en Oracle 21c XE (XEPDB1)</p>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <strong>Todo el acceso a datos pasa por PL/SQL packages.</strong> La capa Python (SQLAlchemy + cx_Oracle) nunca emite SQL directo contra las tablas — llama a los stored procedures de cada package, que retornan <code>SYS_REFCURSOR</code> para consultas y <code>OUT</code> parameters para escrituras.
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Resumen de objetos</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th><th>Cantidad</th><th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="tag tag-package">Package</span></td><td>6</td><td>pkg_roles, pkg_library_users, pkg_categories, pkg_authors, pkg_books, pkg_loans, pkg_returns (7 contando el auxiliar p_ensure_sequence)</td></tr>
+            <tr><td><span class="tag tag-trigger">Trigger</span></td><td>9</td><td>7 de <code>updated_at</code> + 2 de lógica de stock (checkout y restore)</td></tr>
+            <tr><td><span class="tag tag-seq">Sequence</span></td><td>7</td><td>Una por cada tabla principal (gestión idempotente vía <code>p_ensure_sequence</code>)</td></tr>
+            <tr><td><span class="tag tag-index">Index</span></td><td>7</td><td>Sobre columnas de búsqueda frecuente (título, categoría, nombre, rol, estado de préstamo)</td></tr>
+            <tr><td>Tabla</td><td>7</td><td>roles, library_users, categories, authors, books, book_authors, loans, returns</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="diagram-wrap">
+        <h3>📐 Diagrama de capas</h3>
+        <div class="mermaid">
+graph TD
+    A["🐍 Python / Flask API"] --> B["cx_Oracle / SQLAlchemy"]
+    B --> C["PL/SQL Packages<br/>pkg_books · pkg_loans · pkg_returns · …"]
+    C --> D["Tablas Oracle<br/>BIBLIOTECA.*"]
+    C --> E["Triggers automáticos<br/>stock · updated_at"]
+    E --> D
+
+    style A fill:#2c5f2e,color:#f5e9c8,stroke:none
+    style B fill:#4a8c4d,color:#fff,stroke:none
+    style C fill:#c9972a,color:#fff,stroke:none
+    style D fill:#7a5230,color:#fff,stroke:none
+    style E fill:#6b4c9a,color:#fff,stroke:none
+        </div>
+      </div>
+    </section>
+
+    <!-- ER DIAGRAM -->
+    <section class="section" id="er-diagram">
+      <div class="section-header">
+        <div class="icon accent">🔗</div>
+        <div>
+          <h2>Diagrama Entidad-Relación</h2>
+          <p>Relaciones entre tablas del esquema BIBLIOTECA</p>
+        </div>
+      </div>
+
+      <div class="diagram-wrap">
+        <div class="mermaid">
+erDiagram
+    ROLES {
+        NUMBER id PK
+        VARCHAR2 name
+        VARCHAR2 description
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    LIBRARY_USERS {
+        NUMBER id PK
+        VARCHAR2 username
+        VARCHAR2 full_name
+        VARCHAR2 email
+        VARCHAR2 phone
+        VARCHAR2 password_hash
+        CHAR is_active
+        NUMBER role_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    CATEGORIES {
+        NUMBER id PK
+        VARCHAR2 name
+        VARCHAR2 description
+        CHAR is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    AUTHORS {
+        NUMBER id PK
+        VARCHAR2 first_name
+        VARCHAR2 last_name
+        VARCHAR2 biography
+        DATE birth_date
+        DATE death_date
+        CHAR is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    BOOKS {
+        NUMBER id PK
+        VARCHAR2 title
+        VARCHAR2 isbn
+        VARCHAR2 description
+        DATE publication_date
+        VARCHAR2 publisher
+        VARCHAR2 edition
+        NUMBER pages
+        NUMBER stock_total
+        NUMBER stock_available
+        CHAR is_active
+        NUMBER category_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    BOOK_AUTHORS {
+        NUMBER book_id FK
+        NUMBER author_id FK
+        TIMESTAMP created_at
+    }
+    LOANS {
+        NUMBER id PK
+        NUMBER user_id FK
+        NUMBER book_id FK
+        DATE loan_date
+        DATE due_date
+        DATE return_date
+        VARCHAR2 status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    RETURNS {
+        NUMBER id PK
+        NUMBER loan_id FK
+        DATE return_date
+        NUMBER fine_amount
+        VARCHAR2 notes
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    ROLES ||--o{ LIBRARY_USERS : "has role"
+    CATEGORIES ||--o{ BOOKS : "categorizes"
+    BOOKS ||--o{ BOOK_AUTHORS : "written by"
+    AUTHORS ||--o{ BOOK_AUTHORS : "writes"
+    LIBRARY_USERS ||--o{ LOANS : "requests"
+    BOOKS ||--o{ LOANS : "loaned as"
+    LOANS ||--|| RETURNS : "resolved by"
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Constraint clave en BOOKS:</strong> <code>CONSTRAINT ck_books_stock CHECK (stock_available &lt;= stock_total)</code> — el stock disponible nunca puede superar el total. El trigger <code>trg_loans_checkout_stock</code> además previene que baje a negativo al crear un préstamo.
+      </div>
+    </section>
+
+    <!-- TABLES -->
+    <section class="section" id="tables">
+      <div class="section-header">
+        <div class="icon">📋</div>
+        <div>
+          <h2>Tablas</h2>
+          <p>Definición de columnas clave y restricciones</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>LOANS — estados posibles del campo <code>status</code></div>
+        <table>
+          <thead><tr><th>Estado</th><th>Significado</th><th>Transición permitida</th></tr></thead>
+          <tbody>
+            <tr><td><code>ACTIVE</code></td><td>Préstamo vigente</td><td>→ RETURNED, OVERDUE, CANCELLED</td></tr>
+            <tr><td><code>RETURNED</code></td><td>Libro devuelto</td><td>Estado final — sin cambio</td></tr>
+            <tr><td><code>OVERDUE</code></td><td>Venció el plazo</td><td>→ RETURNED (al devolver)</td></tr>
+            <tr><td><code>CANCELLED</code></td><td>Cancelado antes de devolución</td><td>Estado final — sin cambio</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Restricciones de integridad relevantes</div>
+        <table>
+          <thead><tr><th>Constraint</th><th>Tabla</th><th>Regla</th></tr></thead>
+          <tbody>
+            <tr><td><code>ck_books_stock</code></td><td>BOOKS</td><td><code>stock_available &lt;= stock_total</code></td></tr>
+            <tr><td><code>ck_loans_due_date</code></td><td>LOANS</td><td><code>due_date &gt;= loan_date</code></td></tr>
+            <tr><td><code>ck_loans_return_date</code></td><td>LOANS</td><td><code>return_date IS NULL OR return_date &gt;= loan_date</code></td></tr>
+            <tr><td><code>ck_authors_dates</code></td><td>AUTHORS</td><td><code>death_date IS NULL OR death_date &gt;= birth_date</code></td></tr>
+            <tr><td><code>pk_book_authors</code></td><td>BOOK_AUTHORS</td><td>PK compuesta <code>(book_id, author_id)</code> — no duplicados</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PACKAGES -->
+    <section class="section" id="packages">
+      <div class="section-header">
+        <div class="icon">📦</div>
+        <div>
+          <h2>Packages y Procedures</h2>
+          <p>Toda la lógica de negocio está encapsulada en 6 packages PL/SQL</p>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <strong>Convención de nombres:</strong> todos los packages siguen el patrón <code>pkg_&lt;entidad&gt;</code> y sus procedures usan prefijos: <code>p_insert</code>, <code>p_update</code>, <code>p_delete</code>, <code>p_sel_by_id</code>, <code>p_list</code>. Las consultas retornan <code>SYS_REFCURSOR</code>; las escrituras retornan el nuevo <code>id</code> como parámetro <code>OUT</code>.
+      </div>
+
+      <div class="pkg-grid">
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_roles</h3>
+            <span>Gestión de roles del sistema</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_insert</span><span class="proc-desc">Crea un rol. Retorna <code>p_id OUT</code>.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Actualiza nombre y descripción por ID.</span></div>
+            <div class="proc-item"><span class="proc-name">p_delete</span><span class="proc-desc">Elimina. <code>p_deleted OUT</code> indica si afectó alguna fila.</span></div>
+            <div class="proc-item"><span class="proc-name">p_sel_by_id</span><span class="proc-desc">Retorna un cursor con el rol por ID.</span></div>
+            <div class="proc-item"><span class="proc-name">p_list</span><span class="proc-desc">Retorna cursor con todos los roles ordenados por ID.</span></div>
+          </div>
+        </div>
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_library_users</h3>
+            <span>Usuarios de la biblioteca</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_insert</span><span class="proc-desc">Crea un usuario con hash de contraseña, rol y estado activo.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Actualiza todos los campos incluyendo contraseña y rol.</span></div>
+            <div class="proc-item"><span class="proc-name">p_delete</span><span class="proc-desc">Elimina usuario. Retorna <code>p_deleted</code>.</span></div>
+            <div class="proc-item"><span class="proc-name">p_sel_by_id</span><span class="proc-desc">Busca usuario por ID (cursor).</span></div>
+            <div class="proc-item"><span class="proc-name">p_list</span><span class="proc-desc">Lista todos los usuarios.</span></div>
+          </div>
+        </div>
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_categories</h3>
+            <span>Categorías de libros</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_insert</span><span class="proc-desc">Crea categoría con nombre, descripción e is_active.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Modifica nombre, descripción y estado activo.</span></div>
+            <div class="proc-item"><span class="proc-name">p_delete</span><span class="proc-desc">Elimina si no tiene libros asociados (FK constraint).</span></div>
+            <div class="proc-item"><span class="proc-name">p_sel_by_id</span><span class="proc-desc">Retorna cursor con la categoría.</span></div>
+            <div class="proc-item"><span class="proc-name">p_list</span><span class="proc-desc">Lista todas las categorías.</span></div>
+          </div>
+        </div>
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_authors</h3>
+            <span>Autores de libros</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_insert</span><span class="proc-desc">Registra autor con nombre, biografía y fechas de vida.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Modifica todos los campos del autor.</span></div>
+            <div class="proc-item"><span class="proc-name">p_delete</span><span class="proc-desc">Elimina (CASCADE elimina también book_authors).</span></div>
+            <div class="proc-item"><span class="proc-name">p_sel_by_id</span><span class="proc-desc">Busca por ID.</span></div>
+            <div class="proc-item"><span class="proc-name">p_list</span><span class="proc-desc">Lista todos los autores.</span></div>
+          </div>
+        </div>
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_books</h3>
+            <span>Catálogo de libros + relación autores</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_insert</span><span class="proc-desc">Crea libro con todos sus metadatos y stock inicial.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Actualiza metadatos y stock.</span></div>
+            <div class="proc-item"><span class="proc-name">p_delete</span><span class="proc-desc">Elimina libro (CASCADE en book_authors).</span></div>
+            <div class="proc-item"><span class="proc-name">p_add_author</span><span class="proc-desc">Asocia un autor al libro. Ignora duplicados (ORA-00001).</span></div>
+            <div class="proc-item"><span class="proc-name">p_remove_author</span><span class="proc-desc">Desasocia un autor específico.</span></div>
+            <div class="proc-item"><span class="proc-name">p_set_authors</span><span class="proc-desc">Reemplaza todos los autores del libro con <code>SYS.ODCINUMBERLIST</code>.</span></div>
+          </div>
+        </div>
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_loans</h3>
+            <span>Préstamos — con control de stock</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_insert</span><span class="proc-desc">Crea préstamo ACTIVE. El trigger <code>trg_loans_checkout_stock</code> descuenta el stock automáticamente.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Modifica campos del préstamo (uso interno / admin).</span></div>
+            <div class="proc-item"><span class="proc-name">p_cancel</span><span class="proc-desc">Cancela préstamo ACTIVE y restaura stock. Lanza error si ya está RETURNED o CANCELLED.</span></div>
+            <div class="proc-item"><span class="proc-name">p_sel_by_id</span><span class="proc-desc">Retorna cursor con préstamo por ID.</span></div>
+            <div class="proc-item"><span class="proc-name">p_list</span><span class="proc-desc">Lista todos los préstamos.</span></div>
+          </div>
+        </div>
+
+        <div class="pkg-card">
+          <div class="pkg-header">
+            <h3>pkg_returns</h3>
+            <span>Devoluciones — trigger se encarga del stock</span>
+          </div>
+          <div class="pkg-body">
+            <div class="proc-item"><span class="proc-name">p_process</span><span class="proc-desc">Inserta un registro de devolución. El trigger <code>trg_returns_restore_stock</code> actualiza el préstamo a RETURNED y restaura el stock.</span></div>
+            <div class="proc-item"><span class="proc-name">p_update</span><span class="proc-desc">Modifica notas y monto de multa (admin).</span></div>
+            <div class="proc-item"><span class="proc-name">p_delete</span><span class="proc-desc">Elimina registro de devolución.</span></div>
+            <div class="proc-item"><span class="proc-name">p_sel_by_id</span><span class="proc-desc">Busca devolución por ID.</span></div>
+            <div class="proc-item"><span class="proc-name">p_list</span><span class="proc-desc">Lista todas las devoluciones.</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TRIGGERS -->
+    <section class="section" id="triggers">
+      <div class="section-header">
+        <div class="icon purple">⚡</div>
+        <div>
+          <h2>Triggers</h2>
+          <p>Automatizaciones que se ejecutan al modificar tablas</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Diseño intencional:</strong> los triggers de stock son los guardianes de la integridad del inventario. Ninguna capa de aplicación puede saltear estas reglas porque ocurren en el motor de la DB.
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Triggers <code>updated_at</code> (7 triggers)</div>
+        <table>
+          <thead><tr><th>Trigger</th><th>Tabla</th><th>Cuándo</th></tr></thead>
+          <tbody>
+            <tr><td><code>trg_roles_updated_at</code></td><td>ROLES</td><td>BEFORE UPDATE — asigna <code>SYSTIMESTAMP</code> a <code>updated_at</code></td></tr>
+            <tr><td><code>trg_library_users_updated_at</code></td><td>LIBRARY_USERS</td><td>BEFORE UPDATE</td></tr>
+            <tr><td><code>trg_categories_updated_at</code></td><td>CATEGORIES</td><td>BEFORE UPDATE</td></tr>
+            <tr><td><code>trg_authors_updated_at</code></td><td>AUTHORS</td><td>BEFORE UPDATE</td></tr>
+            <tr><td><code>trg_books_updated_at</code></td><td>BOOKS</td><td>BEFORE UPDATE</td></tr>
+            <tr><td><code>trg_loans_updated_at</code></td><td>LOANS</td><td>BEFORE UPDATE</td></tr>
+            <tr><td><code>trg_returns_updated_at</code></td><td>RETURNS</td><td>BEFORE UPDATE</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="diagram-wrap">
+        <h3>⚡ trg_loans_checkout_stock — al crear un préstamo</h3>
+        <div class="mermaid">
+flowchart TD
+    A["INSERT INTO BIBLIOTECA.loans"] --> B["TRIGGER BEFORE INSERT\ntrg_loans_checkout_stock"]
+    B --> C{{"status = 'ACTIVE'?"}}
+    C -- No --> Z["Continúa sin cambio de stock"]
+    C -- Sí --> D["SELECT stock_available FROM books\nWHERE id = :NEW.book_id FOR UPDATE"]
+    D --> E{{"stock_available <= 0?"}}
+    E -- Sí --> F["RAISE_APPLICATION_ERROR(-20001)\n'Book has no available stock'"]
+    E -- No --> G["UPDATE books SET\nstock_available = stock_available - 1"]
+    G --> H["✅ INSERT confirmado"]
+
+    style F fill:#b83232,color:#fff,stroke:none
+    style H fill:#2c5f2e,color:#fff,stroke:none
+    style B fill:#6b4c9a,color:#fff,stroke:none
+        </div>
+      </div>
+
+      <div class="diagram-wrap">
+        <h3>⚡ trg_returns_restore_stock — al registrar una devolución</h3>
+        <div class="mermaid">
+flowchart TD
+    A["INSERT INTO BIBLIOTECA.returns\nvía pkg_returns.p_process"] --> B["TRIGGER AFTER INSERT\ntrg_returns_restore_stock"]
+    B --> C["SELECT book_id, status FROM loans\nWHERE id = :NEW.loan_id FOR UPDATE"]
+    C --> D{{"status = 'RETURNED'\nalready?"}}
+    D -- Sí --> Z["No hace nada\n(idempotente)"]
+    D -- No --> E["UPDATE loans SET\nstatus = 'RETURNED'\nreturn_date = :NEW.return_date"]
+    E --> F["UPDATE books SET\nstock_available = stock_available + 1\n(si stock_available &lt; stock_total)"]
+    F --> G["✅ Devolución completada"]
+
+    style B fill:#6b4c9a,color:#fff,stroke:none
+    style G fill:#2c5f2e,color:#fff,stroke:none
+    style Z fill:#9a8e7a,color:#fff,stroke:none
+        </div>
+      </div>
+    </section>
+
+    <!-- SEQUENCES -->
+    <section class="section" id="sequences">
+      <div class="section-header">
+        <div class="icon accent">🔢</div>
+        <div>
+          <h2>Sequences</h2>
+          <p>Generadores de IDs — gestionadas de forma idempotente</p>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <strong>Procedimiento auxiliar <code>p_ensure_sequence</code>:</strong> en vez de crear las sequences con un <code>CREATE SEQUENCE</code> simple, el schema usa este procedimiento que: (1) crea si no existe, (2) si existe, avanza el valor al <code>MAX(id) + 1</code> de la tabla para evitar conflictos al re-ejecutar el script de inicialización.
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Sequences disponibles</div>
+        <table>
+          <thead><tr><th>Sequence</th><th>Tabla objetivo</th><th>Configuración</th></tr></thead>
+          <tbody>
+            <tr><td><code>seq_roles_id</code></td><td>ROLES</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+            <tr><td><code>seq_library_users_id</code></td><td>LIBRARY_USERS</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+            <tr><td><code>seq_categories_id</code></td><td>CATEGORIES</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+            <tr><td><code>seq_authors_id</code></td><td>AUTHORS</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+            <tr><td><code>seq_books_id</code></td><td>BOOKS</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+            <tr><td><code>seq_loans_id</code></td><td>LOANS</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+            <tr><td><code>seq_returns_id</code></td><td>RETURNS</td><td>INCREMENT BY 1 · NOCACHE · NOCYCLE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- INDEXES -->
+    <section class="section" id="indexes">
+      <div class="section-header">
+        <div class="icon">🔍</div>
+        <div>
+          <h2>Índices</h2>
+          <p>Índices de performance sobre columnas de búsqueda frecuente</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Índices creados</div>
+        <table>
+          <thead><tr><th>Índice</th><th>Tabla</th><th>Columnas</th><th>Justificación</th></tr></thead>
+          <tbody>
+            <tr><td><code>IX_BOOKS_TITLE</code></td><td>BOOKS</td><td><code>title</code></td><td>Búsqueda de libros por nombre</td></tr>
+            <tr><td><code>IX_BOOKS_CATEGORY</code></td><td>BOOKS</td><td><code>category_id</code></td><td>Filtrado por categoría</td></tr>
+            <tr><td><code>IX_AUTHORS_NAME</code></td><td>AUTHORS</td><td><code>last_name, first_name</code></td><td>Búsqueda por apellido y nombre</td></tr>
+            <tr><td><code>IX_USERS_ROLE</code></td><td>LIBRARY_USERS</td><td><code>role_id</code></td><td>Filtro de usuarios por rol</td></tr>
+            <tr><td><code>IX_LOANS_USER_STATUS</code></td><td>LOANS</td><td><code>user_id, status</code></td><td>Préstamos activos de un usuario</td></tr>
+            <tr><td><code>IX_LOANS_BOOK_STATUS</code></td><td>LOANS</td><td><code>book_id, status</code></td><td>Estado de préstamo por libro</td></tr>
+            <tr><td><code>IX_RETURNS_LOAN</code></td><td>RETURNS</td><td><code>loan_id</code></td><td>Búsqueda de devolución por préstamo</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FLOW LOAN -->
+    <section class="section" id="flow-loan">
+      <div class="section-header">
+        <div class="icon">📖</div>
+        <div>
+          <h2>Flujo: Crear préstamo</h2>
+          <p>Desde la petición HTTP hasta el commit en Oracle</p>
+        </div>
+      </div>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Frontend → API</h4>
+            <p>El usuario (autenticado) hace <code>POST /api/loans</code> con <code>book_id</code>, <code>loan_date</code> y <code>due_date</code>. La sesión Flask aporta el <code>user_id</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Python llama al package</h4>
+            <p>El repositorio de Python llama a <code>pkg_loans.p_insert(p_user_id, p_book_id, p_loan_date, p_due_date, p_id OUT)</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>INSERT en LOANS</h4>
+            <p>El procedure inserta en <code>BIBLIOTECA.loans</code> con status <code>ACTIVE</code>. Esto dispara el trigger <code>trg_loans_checkout_stock</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Trigger verifica y descuenta stock</h4>
+            <p>El trigger bloquea la fila del libro (<code>FOR UPDATE</code>), verifica que <code>stock_available &gt; 0</code> y ejecuta <code>UPDATE books SET stock_available = stock_available - 1</code>. Si stock es 0, lanza error <code>-20001</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>COMMIT y respuesta</h4>
+            <p>Python hace commit. El préstamo queda activo y el <code>stock_available</code> del libro decrementado en 1.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-wrap" style="margin-top:24px;">
+        <div class="mermaid">
+sequenceDiagram
+    actor U as Usuario
+    participant F as Flask API
+    participant P as pkg_loans.p_insert
+    participant T as trg_loans_checkout_stock
+    participant B as BOOKS
+    participant L as LOANS
+
+    U->>F: POST /api/loans {book_id, due_date}
+    F->>P: p_insert(user_id, book_id, loan_date, due_date)
+    P->>L: INSERT INTO loans STATUS='ACTIVE'
+    L-->>T: BEFORE INSERT trigger fires
+    T->>B: SELECT stock_available FOR UPDATE
+    alt stock_available = 0
+        T-->>F: RAISE_APPLICATION_ERROR -20001
+        F-->>U: 400 "No available stock"
+    else stock_available > 0
+        T->>B: UPDATE stock_available - 1
+        L-->>P: RETURNING id INTO p_id
+        P-->>F: p_id = nuevo loan_id
+        F-->>U: 201 {loan_id}
+    end
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOW RETURN -->
+    <section class="section" id="flow-return">
+      <div class="section-header">
+        <div class="icon accent">↩️</div>
+        <div>
+          <h2>Flujo: Devolver libro</h2>
+          <p>Proceso de devolución y restauración automática de stock</p>
+        </div>
+      </div>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Frontend → API</h4>
+            <p><code>POST /api/returns</code> con <code>loan_id</code>, <code>return_date</code> y opcionalmente <code>fine_amount</code> y <code>notes</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Python llama al package</h4>
+            <p>El repositorio llama a <code>pkg_returns.p_process(loan_id, return_date, fine_amount, notes, p_id OUT)</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>INSERT en RETURNS</h4>
+            <p>El procedure inserta en <code>BIBLIOTECA.returns</code>. Esto dispara el trigger <code>trg_returns_restore_stock</code> (AFTER INSERT).</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Trigger actualiza préstamo y restaura stock</h4>
+            <p>Lee el <code>book_id</code> del préstamo, pone el préstamo en <code>RETURNED</code>, y hace <code>stock_available + 1</code> solo si no superaría <code>stock_total</code>.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>COMMIT</h4>
+            <p>La devolución queda registrada, el préstamo marcado como RETURNED y el libro disponible nuevamente.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOW CANCEL -->
+    <section class="section" id="flow-cancel">
+      <div class="section-header">
+        <div class="icon red">🚫</div>
+        <div>
+          <h2>Flujo: Cancelar préstamo</h2>
+          <p>Cancelación controlada vía <code>pkg_loans.p_cancel</code></p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <strong>Importante:</strong> La cancelación <strong>no</strong> usa el trigger de devolución. <code>p_cancel</code> actualiza el préstamo a <code>CANCELLED</code> y restaura el stock <strong>directamente</strong> dentro del procedure, sin pasar por la tabla <code>RETURNS</code>.
+      </div>
+
+      <div class="diagram-wrap">
+        <div class="mermaid">
+flowchart TD
+    A["pkg_loans.p_cancel(p_id)"] --> B["SELECT book_id, status\nFOR UPDATE"]
+    B --> C{{"status IN\nRETURNED / CANCELLED?"}}
+    C -- Sí --> D["RAISE_APPLICATION_ERROR(-20002)\n'Cannot cancel loan: status is ...'"]
+    C -- No --> E["UPDATE loans SET\nstatus = 'CANCELLED'"]
+    E --> F["UPDATE books SET\nstock_available + 1\n(si stock_available < stock_total)"]
+    F --> G["p_cancelled := 1"]
+    B -- NO_DATA_FOUND --> H["p_cancelled := 0"]
+
+    style D fill:#b83232,color:#fff,stroke:none
+    style G fill:#2c5f2e,color:#fff,stroke:none
+    style H fill:#9a8e7a,color:#fff,stroke:none
+        </div>
+      </div>
+    </section>
+
+    <!-- FILE LOCATION -->
+    <section class="section" id="file-location">
+      <div class="section-header">
+        <div class="icon">📁</div>
+        <div>
+          <h2>Ubicación del archivo</h2>
+          <p>Dónde encontrar cada componente en el repositorio</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Estructura del proyecto relevante</div>
+        <table>
+          <thead><tr><th>Ruta</th><th>Contenido</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="file-path">📄 database/oracle_schema.sql</span></td>
+              <td>Script completo de la DB: tablas, triggers, sequences, packages PL/SQL. <strong>Es el único archivo SQL del proyecto.</strong></td>
+            </tr>
+            <tr>
+              <td><span class="file-path">📄 database/db_documentation.html</span></td>
+              <td>Este archivo.</td>
+            </tr>
+            <tr>
+              <td><span class="file-path">📁 app/repositories/</span></td>
+              <td>Capa Python que llama a los packages via cx_Oracle. Cada entidad tiene su propio repositorio.</td>
+            </tr>
+            <tr>
+              <td><span class="file-path">📁 app/api/</span></td>
+              <td>Endpoints Flask que reciben las peticiones HTTP y delegan a los repositorios.</td>
+            </tr>
+            <tr>
+              <td><span class="file-path">📄 app/static/css/styles.css</span></td>
+              <td>Estilos globales del frontend (SPA).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EXEC GUIDE -->
+    <section class="section" id="exec-guide">
+      <div class="section-header">
+        <div class="icon">⚙️</div>
+        <div>
+          <h2>Guía de ejecución del schema</h2>
+          <p>Cómo inicializar o resetear la base de datos</p>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <strong>El script es idempotente.</strong> Si la DB ya existe y se vuelve a ejecutar, las tablas y sequences no se recrean — el script detecta su existencia y las omite. Los packages sí se reemplazan (<code>CREATE OR REPLACE</code>).
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Pasos de ejecución</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Prerrequisito</h4>
+              <p>Tener Oracle 21c XE corriendo con el PDB <code>XEPDB1</code> disponible. Conectarse como <code>SYS AS SYSDBA</code>.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Ejecutar el script</h4>
+              <p>Desde el directorio raíz del proyecto:<br>
+              <code>sqlplus / as sysdba @database/oracle_schema.sql</code><br>
+              SQL*Plus pedirá una contraseña para el usuario BIBLIOTECA (se define en ese momento).</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Configurar .env</h4>
+              <p>Actualizar <code>DB_PASSWORD</code> en el archivo <code>.env</code> del proyecto con la contraseña elegida para el usuario BIBLIOTECA.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Verificar</h4>
+              <p>El script ejecuta <code>PROMPT BIBLIOTECA Oracle schema is ready in XEPDB1.</code> al finalizar exitosamente. Comprobar que no haya errores ORA- en la salida.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+</div><!-- /layout -->
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#2c5f2e',
+      primaryTextColor: '#ffffff',
+      primaryBorderColor: '#1a3a1c',
+      lineColor: '#c8bba0',
+      secondaryColor: '#f5efe0',
+      tertiaryColor: '#fffef9',
+      background: '#fffef9',
+      mainBkg: '#2c5f2e',
+      nodeBorder: '#1a3a1c',
+      clusterBkg: '#f8f4ec',
+      titleColor: '#1e1a14',
+      edgeLabelBackground: '#f5efe0',
+      attributeBackgroundColorEven: '#fffef9',
+      attributeBackgroundColorOdd: '#f8f4ec',
+    },
+    er: { diagramPadding: 20, layoutDirection: 'TB', minEntityWidth: 100 },
+    flowchart: { curve: 'basis', padding: 20 },
+    sequence: { actorMargin: 60, width: 150, diagramMarginX: 20, diagramMarginY: 10 },
+  });
+
+  // Active nav highlight on scroll
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.sidebar a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
