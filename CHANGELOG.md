@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.5](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.4...sistema-biblioteca-v0.12.5) (2026-06-11)
+
+
+### Bug Fixes
+
+* **static:** subclass StaticFiles to disable browser caching ([baa17df](https://github.com/Exar-lab/Sistema_Biblioteca/commit/baa17df9501c1f0cdda8e114f1a34f5eedd72812))
+* **static:** subclass StaticFiles to disable browser caching ([16e67e5](https://github.com/Exar-lab/Sistema_Biblioteca/commit/16e67e50b8b52b203016ec49c07afdc54e164ef9)), closes [#95](https://github.com/Exar-lab/Sistema_Biblioteca/issues/95)
+
 ## [0.12.4](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.3...sistema-biblioteca-v0.12.4) (2026-06-08)
 
 
