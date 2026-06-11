@@ -35,7 +35,15 @@ app.include_router(reports_router, prefix="/api/v1")
 app.include_router(returns_router, prefix="/api/v1")
 app.include_router(roles_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
-app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        return response
+
+
+app.mount("/static", NoCacheStaticFiles(directory="app/static", html=True), name="static")
 
 
 @app.get("/", include_in_schema=False)
