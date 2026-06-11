@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.0](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.5...sistema-biblioteca-v0.13.0) (2026-06-11)
+
+
+### Features
+
+* **authors:** make death date optional ([151d0aa](https://github.com/Exar-lab/Sistema_Biblioteca/commit/151d0aa4e8bea52f7345548dc516050c125186d8))
+* **authors:** make death date optional ([4c993fb](https://github.com/Exar-lab/Sistema_Biblioteca/commit/4c993fbe58f98c4abe65010042668bb73978194c))
+
 ## [0.12.5](https://github.com/Exar-lab/Sistema_Biblioteca/compare/sistema-biblioteca-v0.12.4...sistema-biblioteca-v0.12.5) (2026-06-11)
 
 
