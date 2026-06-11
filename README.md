@@ -1,8 +1,8 @@
 <div align="center">
 
-# 📚 Library Management System
+# Library Management System
 
-**A FastAPI + Oracle backend for managing books, users, loans, returns, and administrative reports.**
+FastAPI + Oracle application for managing a library catalog, users, loans, returns, and administrative reports.
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi)
@@ -13,131 +13,123 @@
 
 ---
 
-## ✨ Overview
-
-This project is a **Library Management System** built with **FastAPI**, **SQLAlchemy**, and **Oracle**.
-
-The repository is currently in an **API-first stage**: it exposes JWT authentication, catalog management, loans, returns, roles, reports, and a database healthcheck. A server-rendered web interface is planned for a later stage using **Jinja2 + Bootstrap**.
-
----
-
-## 🧱 Current Stack
-
-| Area | Technology |
-| --- | --- |
-| API | FastAPI |
-| Persistence | SQLAlchemy + Oracle (`oracledb`) |
-| Authentication | JWT with `python-jose` and password hashing with `passlib[bcrypt]` |
-| Configuration | `pydantic-settings` |
-| Testing | `pytest` + `TestClient` |
-| Frontend | Static HTML, CSS, and vanilla JavaScript served from `app/static` |
-
----
-
-## 🚀 Features
-
-<table>
-  <tr>
-    <td><strong>Authentication</strong></td>
-    <td>User registration, login, JWT access tokens, and authenticated profile endpoint.</td>
-  </tr>
-  <tr>
-    <td><strong>Catalog</strong></td>
-    <td>CRUD operations for books, authors, categories, and roles.</td>
-  </tr>
-  <tr>
-    <td><strong>Loans</strong></td>
-    <td>Loan creation and return handling with stock business rules.</td>
-  </tr>
-  <tr>
-    <td><strong>Reports</strong></td>
-    <td>Administrative dashboard endpoints for library metrics.</td>
-  </tr>
-  <tr>
-    <td><strong>Healthcheck</strong></td>
-    <td>Application and database status available at <code>/health</code>.</td>
-  </tr>
-</table>
-
----
-
-## 📁 Project Structure
-
-```text
-.
-├── main.py                         # FastAPI entry point and health endpoints
-├── app/
-│   ├── api/v1/routers/             # HTTP routes by domain
-│   ├── application/services/        # Application business logic
-│   ├── infrastructure/repositories/ # SQLAlchemy data access
-│   ├── schemas/                     # Pydantic request/response models
-│   └── core/                        # Settings, database, and security
-├── database/
-│   └── oracle_schema.sql            # Oracle bootstrap script
-└── tests/                           # Unit and integration tests
-```
-
----
-
-## ⚙️ Local Setup
-
-### 1. Create and activate a virtual environment
+## Quick start
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-### 2. Install dependencies
-
-```powershell
 python -m pip install -r requirements.txt
-```
-
-### 3. Create environment variables
-
-```powershell
 Copy-Item .env.example .env
+uvicorn main:app --reload
 ```
 
-Edit `.env` and configure at least:
+Then open:
 
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `DATABASE_URL` | Yes | Oracle connection string. |
-| `SECRET_KEY` | Yes | Secret used to sign JWT tokens. |
-| `SQLALCHEMY_ECHO` | No | Enables SQL logging when needed. |
-| `ALGORITHM` | No | Defaults to `HS256`. |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Defaults to `30`. |
+- Web UI: `http://127.0.0.1:8000/`
+- API docs: `http://127.0.0.1:8000/docs`
+- Healthcheck: `http://127.0.0.1:8000/health`
+
+> Configure `.env` before running the app against Oracle.
 
 ---
 
-## 🗄️ Oracle Bootstrap
+## Current scope
 
-The script `database/oracle_schema.sql` creates or updates the `BIBLIOTECA` user, tables, triggers, indexes, sequences, and initial role data.
+The system currently includes an API-first backend, a static multi-page frontend served by FastAPI, Oracle schema scripts, demo data seeding, and automated tests.
 
-### Requirements
+| Area | Available functionality |
+| --- | --- |
+| Authentication | Registration, login, JWT access tokens, authenticated profile, password change |
+| Users and roles | Admin/Usuario roles, user listing, profile updates, active-account management |
+| Catalog | CRUD for books, authors, categories, and book filtering/search support |
+| Loans | Loan creation, user loan history, return and cancellation flows |
+| Returns | Return records and return update endpoints |
+| Reports | Dashboard metrics through `/api/v1/reports/dashboard` |
+| Frontend | Static pages for login, catalog, books, authors, categories, users, loans, returns, and reports |
+| Database | Oracle schema bootstrap with tables, sequences, indexes, triggers, and initial role data |
+
+---
+
+## Stack
+
+| Area | Technology |
+| --- | --- |
+| Backend | FastAPI |
+| Database access | SQLAlchemy + `oracledb` |
+| Database | Oracle XE / Oracle PDB |
+| Schemas | Pydantic v2 |
+| Configuration | `pydantic-settings` + `.env` |
+| Authentication | `python-jose` JWT + `passlib[bcrypt]` |
+| Frontend | Static HTML, CSS, and vanilla JavaScript in `app/static` |
+| Testing | pytest + FastAPI `TestClient` |
+
+---
+
+## Project structure
+
+```text
+.
+├── main.py                         # FastAPI app, routers, static frontend, health endpoint
+├── app/
+│   ├── api/v1/routers/             # HTTP endpoints by domain
+│   ├── application/services/        # Business rules and use cases
+│   ├── core/                        # Settings, database session, security helpers
+│   ├── infrastructure/repositories/ # SQLAlchemy data access
+│   ├── schemas/                     # Pydantic request/response models
+│   └── static/                      # Static frontend assets and pages
+├── database/
+│   └── oracle_schema.sql            # Oracle bootstrap script
+├── docs/                            # User and technical manuals
+├── scripts/
+│   └── seed_demo_data.py            # Deterministic demo data loader
+└── tests/                           # Slice and unit tests
+```
+
+---
+
+## Environment variables
+
+Create `.env` from `.env.example` and configure these values:
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | Oracle SQLAlchemy connection string. |
+| `SECRET_KEY` | Yes | Secret used to sign JWT tokens. Keep it private. |
+| `SQLALCHEMY_ECHO` | No | Enables SQL logging when set to `true`. |
+| `ALGORITHM` | No | Defaults to `HS256`. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Defaults to `30`. |
+
+Never commit a real `.env` file or production secrets.
+
+---
+
+## Oracle bootstrap
+
+`database/oracle_schema.sql` creates or updates the `BIBLIOTECA` user, schema objects, triggers, indexes, sequences, and initial roles.
+
+Requirements:
 
 - Oracle XE with the `XEPDB1` PDB active.
-- Execute the script as `SYS` or as a DBA-privileged user.
+- `sqlplus` available in the terminal.
+- SYS or DBA-privileged access to execute the bootstrap script.
 
-### Run the script
+Run:
 
 ```powershell
 sqlplus / as sysdba @database/oracle_schema.sql
 ```
 
-The script asks for the `BIBLIOTECA` password and is designed to be idempotent.
+The script asks for the `BIBLIOTECA` password and is designed to be rerunnable.
 
-## 🌱 Demo Data
+---
 
-Seed deterministic demo data after the schema is ready:
+## Demo data
+
+After the Oracle schema is ready, seed deterministic demo records:
 
 ```powershell
 python scripts/seed_demo_data.py
 ```
-
-The script is designed to be rerunnable for the demo-prefixed records and uses fixed demo dates so loan history stays deterministic.
 
 Demo credentials:
 
@@ -150,109 +142,97 @@ Demo credentials:
 | `demo.dan` | `DemoUser123!` | Usuario |
 | `demo.valeria` | `DemoUser123!` | Usuario |
 
-### Validate database objects
+---
 
-```sql
-SELECT object_name, object_type, status
-FROM user_objects
-WHERE object_type IN ('TABLE', 'TRIGGER', 'INDEX', 'SEQUENCE')
-ORDER BY object_type, object_name;
-```
+## API reference
+
+Interactive OpenAPI documentation is available at `/docs` when the app is running.
+
+| Route group | Purpose |
+| --- | --- |
+| `/api/v1/auth` | Login, registration, current user, password change |
+| `/api/v1/users` | User listing, lookup, updates, active status |
+| `/api/v1/roles` | Role management |
+| `/api/v1/authors` | Author management |
+| `/api/v1/books` | Book catalog management |
+| `/api/v1/categories` | Category management |
+| `/api/v1/loans` | Loans, user history, returns, cancellations |
+| `/api/v1/returns` | Return records |
+| `/api/v1/reports` | Administrative dashboard metrics |
 
 ---
 
-## 🧪 Development
+## Frontend pages
 
-### Verify Python syntax
+The frontend is served from `/static`, with `/` redirecting to `/static/index.html`.
+
+Key pages:
+
+- `/static/index.html`
+- `/static/pages/admin-dashboard.html`
+- `/static/pages/catalogo.html`
+- `/static/pages/libros.html`
+- `/static/pages/autores.html`
+- `/static/pages/categorias.html`
+- `/static/pages/usuarios.html`
+- `/static/pages/prestamos.html`
+- `/static/pages/mis-prestamos.html`
+- `/static/pages/reportes.html`
+
+---
+
+## Development commands
+
+Install dependencies:
 
 ```powershell
-python -m compileall app main.py scripts
+python -m pip install -r requirements.txt
 ```
 
-### Run the development server
+Run the app:
 
 ```powershell
 uvicorn main:app --reload
 ```
 
-### Check application health
+Verify Python syntax:
+
+```powershell
+python -m compileall app main.py scripts
+```
+
+Run tests:
+
+```powershell
+python -m pytest
+```
+
+Check health:
 
 ```powershell
 curl http://127.0.0.1:8000/health
 ```
 
-Expected response when Oracle is available:
+Expected response when Oracle is reachable:
 
 ```json
 {"status":"ok","database":"up"}
 ```
 
-If the database is unavailable, the endpoint returns `503`.
+If Oracle is unavailable, the health endpoint returns `503`.
 
 ---
 
-## 🔐 Authentication and API
+## Documentation
 
-| Endpoint | Description |
-| --- | --- |
-| `POST /api/v1/auth/login` | Returns an `access_token` and the user profile. |
-| `GET /api/v1/auth/me` | Returns the authenticated user. |
-| `/api/v1/authors` | Author management endpoints. |
-| `/api/v1/books` | Book catalog endpoints. |
-| `/api/v1/categories` | Category management endpoints. |
-| `/api/v1/loans` | Loan management endpoints. |
-| `/api/v1/returns` | Return handling endpoints. |
-| `/api/v1/reports` | Administrative report endpoints. |
-| `/api/v1/roles` | Role endpoints; administrator role required. |
+- `docs/manual-tecnico.md` — Spanish technical manual.
+- `docs/technical-manual.md` — English technical manual.
+- `docs/Manual_de_Usuario.html` / `docs/Manual_de_Usuario.pdf` — user manual artifacts.
 
 ---
 
-## 🎨 Frontend
+## Next steps
 
-The web UI is a static multi-page frontend served by FastAPI from `/` and `/static`.
-
-Folder layout:
-
-```text
-app/
-└── static/
-    ├── index.html
-    ├── css/
-    ├── js/
-    └── pages/
-```
-
-Available views include:
-
-- Login
-- Catalog
-- Loans
-- Returns
-- Reports dashboard
-
----
-
-## ✅ Verification
-
-Run the recommended checks before submitting changes:
-
-```powershell
-python -m compileall app main.py
-python -m pytest
-```
-
----
-
-## 🧭 Real Next Steps
-
-- Expand test coverage for business flows.
-- Smoke-test the static web interface against a running backend.
-- Document seed users or initial data if they are added.
-
----
-
-<div align="center">
-
-Made for a clear, practical, and maintainable library control system.
-
-</div>
+- Expand test coverage for the most important business flows.
+- Smoke-test the static frontend against a running Oracle-backed backend.
+- Keep Oracle-specific setup and trigger behavior documented as the schema evolves.
